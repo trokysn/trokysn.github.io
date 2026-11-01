@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#87492E">
+<title>Troky</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}:root{--g:#87492E;--t:#3B1E10;--m:#7A6552;--s:#F3E8DA;--l:#E6D8C6}
+body{margin:0;background:#FDF9F4;color:var(--t);font:14px/1.45 Inter,system-ui,sans-serif;padding-bottom:84px}
+.w{max-width:560px;margin:auto;padding:16px}
+h1,h2,.logo{font-family:'Playfair Display',serif;font-weight:600;margin:.3em 0}.logo{font-size:26px;color:var(--g)}h2{font-size:22px}h3{margin:18px 0 6px}
+a{color:inherit;text-decoration:none}.mu,small{color:var(--m)}.er{color:#B3261E}
+.in,select,textarea{width:100%;padding:12px 14px;border:1.5px solid #D9C7B0;border-radius:14px;font:inherit;background:#fff;margin:4px 0 12px;color:var(--t)}
+label{display:block;font-weight:600;font-size:12px}
+.btn{display:block;width:100%;height:48px;border:0;border-radius:14px;background:var(--g);color:#fff;font:700 15px Inter,sans-serif;margin:10px 0;cursor:pointer}.btn.o{background:#fff;color:var(--g);border:1.5px solid var(--g)}.btn:disabled{opacity:.5}
+.btn.s{height:38px;font-size:13px;margin:4px 0}.row{display:flex;gap:10px}.row .btn{flex:1}
+.lk{background:none;border:0;color:var(--g);font-weight:600;width:100%;padding:10px;font-size:14px}
+.hero{background:linear-gradient(135deg,#87492E,#B8693F);color:#FDF3E4;border-radius:20px;padding:20px;margin:10px 0}.hero h1{font-size:24px;line-height:1.2;max-width:240px}.hero p{margin:4px 0}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px}.chips button{white-space:nowrap;border:0;border-radius:20px;padding:8px 14px;background:var(--s);color:var(--t);font:600 13px Inter,sans-serif}.chips .on{background:var(--g);color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.c b,.c span,.c small{display:block}.pr{color:var(--g);font-weight:700}.pr.big{font-size:24px}
+.im,.th{aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--s);margin-bottom:6px}.im img,.th img,.gal img{width:100%;height:100%;object-fit:cover}
+.np{width:100%;height:100%;background:linear-gradient(135deg,#EAD7C3,#D8C3A8)}
+.gal{display:flex;gap:8px;overflow-x:auto;margin:8px 0}.gal img{width:85%;aspect-ratio:1;border-radius:16px;flex:none}.gal .np{width:100%;aspect-ratio:1;border-radius:16px}
+.box{background:var(--s);border-radius:14px;padding:14px;margin:12px 0}.blk{display:block}
+.tag{background:#F6E3C8;border-radius:10px;padding:2px 10px;font-weight:600;font-size:12px}
+.row2{display:flex;gap:12px;margin:12px 0}.row2 .th{width:80px;flex:none;margin:0}
+.steps div{display:flex;gap:10px;align-items:center;padding:6px 0;color:var(--m)}.steps i{width:16px;height:16px;border-radius:50%;border:2px solid #CDB89D}.steps .ok{color:var(--t);font-weight:600}.steps .ok i{background:var(--g);border-color:var(--g)}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#FDF9F4;border-top:1px solid var(--l);padding:12px 0 calc(12px + env(safe-area-inset-bottom))}nav a{flex:1;text-align:center;font-weight:600;font-size:12px;color:var(--m)}nav .on{color:var(--g)}
+.bk{display:inline-block;color:var(--m);margin:4px 0}
+</style></head><body><div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SB=supabase.createClient('https://zasijvhorclddolehvww.supabase.co','sb_publishable_XZKrWiM9RVrcNfYHtsCL9w_lS9NzZFr');
+const A=document.getElementById('app'),$=s=>document.querySelector(s),S={me:null,p:null,cats:[],cfg:{}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const F=n=>Number(n).toLocaleString('fr-FR')+' F',go=h=>{location.hash=h};
+const ST={brouillon:'Brouillon',en_attente:'En validation',publiee:'Publiée',refusee:'Refusée',reservee:'Réservée',vendue:'Vendue',supprimee:'Supprimée',en_attente_paiement:'En attente de paiement',payee:'Payée',expediee:'Expédiée',recue:'Reçue',terminee:'Terminée',litige:'Litige',remboursee:'Remboursée',annulee:'Annulée'};
+const CO={neuf:'Neuf',comme_neuf:'Comme neuf',tres_bon:'Très bon état',bon:'Bon état',correct:'État correct'};
+const pics=l=>(l.listing_photos||[]).slice().sort((a,b)=>a.position-b.position);
+const ph=l=>pics(l)[0]?`<img src="${esc(pics(l)[0].url)}" alt="">`:'<div class="np"></div>';
+const card=l=>`<a class="c" href="#/l/${l.id}"><div class="im">${ph(l)}</div><b>${esc(l.title)}</b><span class="pr">${F(l.price)}</span><small>${esc(l.city)} · ${CO[l.condition]||''}</small></a>`;
+const shell=(h,t)=>{A.innerHTML=`<div class="w">${h}</div><nav>${[['/','Accueil'],['/new','Vendre'],['/orders','Commandes'],['/profile',S.me?'Profil':'Connexion']].map(([r,n])=>`<a href="#${r}" class="${t===r?'on':''}">${n}</a>`).join('')}</nav>`};
+const need=()=>{if(!S.me){go('/profile');return true}};
+
+async function boot(){
+ const {data:{session}}=await SB.auth.getSession();S.me=session?.user||null;S.p=null;
+ if(S.me){const {data}=await SB.from('profiles').select('*').eq('id',S.me.id).single();S.p=data}
+ const [c,s]=await Promise.all([SB.from('categories').select('*').order('id'),SB.from('settings').select('*')]);
+ S.cats=c.data||[];S.cfg=Object.fromEntries((s.data||[]).map(r=>[r.key,r.value]));
+}
+async function route(){
+ const a=location.hash.slice(1).split('/')[1]||'',b=location.hash.slice(1).split('/')[2];window.scrollTo(0,0);
+ try{({'':home,l:()=>detail(b),new:newL,mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
+ catch(e){shell(`<p class="er">Erreur : ${esc(e.message)}</p>`,'')}
+}
+
+let q='',cat=0;
+async function home(){
+ let r=SB.from('listings').select('*,listing_photos(url,position)').eq('status','publiee').order('created_at',{ascending:false}).limit(40);
+ if(q)r=r.ilike('title',`%${q}%`);if(cat)r=r.eq('category_id',cat);
+ const {data,error}=await r;if(error)throw error;
+ shell(`<span class="logo">Troky</span><div class="hero"><h1>Une seconde vie pour vos articles</h1><p>Vendez, achetez, redonnez vie.</p></div>
+ <input id="q" class="in" placeholder="Rechercher un article" value="${esc(q)}">
+ <div class="chips"><button data-cat="0" class="${!cat?'on':''}">Tout</button>${S.cats.map(c=>`<button data-cat="${c.id}" class="${cat===c.id?'on':''}">${esc(c.name)}</button>`).join('')}</div>
+ <div class="grid">${data.map(card).join('')||'<p class="mu">Aucune annonce pour le moment.</p>'}</div>`,'/');
+ $('#q').onchange=e=>{q=e.target.value.trim();home()};
+ document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{cat=+b.dataset.cat;home()});
+}
+async function detail(id){
+ const {data:l,error}=await SB.from('listings').select('*,listing_photos(url,position)').eq('id',id).single();if(error)throw error;
+ const {data:s}=await SB.from('public_profiles').select('*').eq('id',l.seller_id).maybeSingle();
+ const own=S.me&&S.me.id===l.seller_id;
+ shell(`<a class="bk" href="#/">← Retour</a><div class="gal">${pics(l).map(p=>`<img src="${esc(p.url)}" alt="">`).join('')||'<div class="np"></div>'}</div>
+ <h2>${esc(l.title)}</h2><div class="pr big">${F(l.price)}</div><p class="mu">${CO[l.condition]||''} · ${esc(l.city)}</p><p>${esc(l.description)}</p>
+ <div class="box"><b>${esc(s?.full_name||'Vendeur')}</b><br><small>${s?.rating_avg||0} sur 5 · ${s?.sales_count||0} ventes</small></div>
+ <p class="mu">Paiement protégé jusqu’à la réception de l’article.</p>
+ ${l.status!=='publiee'?`<span class="tag">${ST[l.status]}</span>`:own?'':'<button class="btn" id="buy">Acheter</button>'}`,'/');
+ const b=$('#buy');if(b)b.onclick=async()=>{if(!S.me)return go('/profile');b.disabled=true;
+  const {data,error}=await SB.rpc('create_order',{p_listing:id});if(error){alert(error.message);b.disabled=false;return}go('/o/'+data.id)};
+}
+
+let D=null;
+async function shrink(f){const b=await createImageBitmap(f),k=Math.min(1,1200/Math.max(b.width,b.height)),c=document.createElement('canvas');c.width=b.width*k;c.height=b.height*k;c.getContext('2d').drawImage(b,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',.8))}
+function newL(){
+ if(need())return;if(D&&D.prev)return prev();const d=D||{};
+ shell(`<h2>Vendre un article</h2><label>Photos (1 à 5)<input id="f" class="in" type="file" accept="image/*" multiple></label>
+ <label>Titre<input id="t" class="in" value="${esc(d.t)}"></label><label>Prix (FCFA)<input id="p" class="in" type="number" inputmode="numeric" value="${esc(d.p)}"></label>
+ <label>Catégorie<select id="c">${S.cats.map(c=>`<option value="${c.id}" ${d.c==c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
+ <label>État<select id="e">${Object.entries(CO).map(([k,v])=>`<option value="${k}" ${d.e===k?'selected':''}>${v}</option>`).join('')}</select></label>
+ <label>Ville<input id="v" class="in" value="${esc(d.v||S.p?.city)}"></label><label>Description<textarea id="d" rows="4">${esc(d.d)}</textarea></label>
+ <button class="btn" id="go">Voir l’aperçu</button>`,'/new');
+ $('#go').onclick=()=>{const f=[...$('#f').files].slice(0,5),files=f.length?f:(d.files||[]),t=$('#t').value.trim(),p=+$('#p').value;
+  if(!files.length||!t||!(p>0))return alert('Ajoutez au moins une photo, un titre et un prix.');
+  D={t,p,c:$('#c').value,e:$('#e').value,v:$('#v').value.trim(),d:$('#d').value.trim(),files,prev:true};prev()};
+}
+function prev(){
+ const d=D;
+ shell(`<h2>Aperçu de votre annonce</h2><p class="mu">Voici ce que verront les acheteurs.</p>
+ <div class="c" style="max-width:220px"><div class="im"><img src="${URL.createObjectURL(d.files[0])}" alt=""></div><b>${esc(d.t)}</b><span class="pr">${F(d.p)}</span><small>${esc(d.v)} · ${CO[d.e]}</small></div>
+ <div class="box">Après l’envoi, votre annonce sera vérifiée avant publication.</div>
+ <div class="row"><button class="btn o" id="ed">Modifier</button><button class="btn" id="se">Envoyer</button></div>`,'/new');
+ $('#ed').onclick=()=>{D.prev=false;newL()};
+ $('#se').onclick=async e=>{const b=e.target;b.disabled=true;b.textContent='Envoi…';
+  try{
+   const {data:l,error}=await SB.from('listings').insert({seller_id:S.me.id,category_id:+d.c,title:d.t,description:d.d,price:d.p,condition:d.e,city:d.v,status:'en_attente'}).select().single();if(error)throw error;
+   for(let i=0;i<d.files.length;i++){const path=`${S.me.id}/${l.id}/${i}.jpg`,{error:e1}=await SB.storage.from('listing-photos').upload(path,await shrink(d.files[i]),{contentType:'image/jpeg',upsert:true});if(e1)throw e1;
+    const {error:e2}=await SB.from('listing_photos').insert({listing_id:l.id,url:SB.storage.from('listing-photos').getPublicUrl(path).data.publicUrl,position:i});if(e2)throw e2}
+   D=null;alert('Annonce envoyée : elle sera publiée après validation.');go('/mine');
+  }catch(x){alert(x.message);b.disabled=false;b.textContent='Envoyer'}};
+}
+async function mine(){
+ if(need())return;
+ const {data}=await SB.from('listings').select('*,listing_photos(url,position)').eq('seller_id',S.me.id).order('created_at',{ascending:false});
+ shell(`<a class="bk" href="#/profile">← Profil</a><h2>Mes annonces</h2>${data.map(l=>`<div class="row2"><a href="#/l/${l.id}" class="th">${ph(l)}</a><div><b>${esc(l.title)}</b><br>${F(l.price)}<br><span class="tag">${ST[l.status]}</span>${l.reject_reason?`<br><small class="er">Motif du refus : ${esc(l.reject_reason)}</small>`:''}</div></div>`).join('')||'<p class="mu">Aucune annonce.</p>'}`,'/profile');
+}
+
+async function orders(){
+ if(need())return;
+ const {data}=await SB.from('orders').select('*,listings(title)').or(`buyer_id.eq.${S.me.id},seller_id.eq.${S.me.id}`).order('created_at',{ascending:false});
+ shell(`<h2>Mes commandes</h2>${data.map(o=>`<a class="box blk" href="#/o/${o.id}"><b>${esc(o.listings?.title||'Article')}</b><br>${o.ref} · ${F(o.item_price)}<br><span class="tag">${ST[o.status]}</span> <small>${o.buyer_id===S.me.id?'Achat':'Vente'}</small></a>`).join('')||'<p class="mu">Aucune commande.</p>'}`,'/orders');
+}
+async function order(id){
+ if(need())return;
+ const [{data:o,error},{data:pay}]=await Promise.all([SB.from('orders').select('*,listings(title)').eq('id',id).single(),SB.from('payments').select('*').eq('order_id',id)]);if(error)throw error;
+ const buy=o.buyer_id===S.me.id,sel=o.seller_id===S.me.id,st=o.status;let act='';
+ const steps=[['Paiement',['payee','expediee','recue','terminee']],['Expédition',['expediee','recue','terminee']],['Réception',['recue','terminee']],['Terminée',['terminee']]];
+ if(buy&&st==='en_attente_paiement')act=pay.length?'<div class="box">Paiement déclaré. Il sera confirmé dès réception de l’argent.</div>':`<div class="box"><b>Payer ${F(o.item_price)}</b><br>Envoyez ce montant par <b>${esc(S.cfg.payment_operator)}</b> au <b>${esc(S.cfg.payment_number)}</b> avec la référence <b>${o.ref}</b>.</div>
+  <label>Opérateur utilisé<select id="op"><option>Wave</option><option>Orange Money</option><option>Free Money</option></select></label><label>Référence de la transaction<input id="rf" class="in"></label><button class="btn" id="pd">J’ai payé</button>`;
+ if(sel&&st==='payee')act='<button class="btn" id="sh">Article expédié</button>';
+ if(buy&&st==='expediee')act='<button class="btn" id="rc">Réception confirmée</button>';
+ if(buy&&['payee','expediee'].includes(st))act+='<button class="btn o" id="ds">Signaler un problème</button>';
+ if(sel&&!S.p.payout_number)act+='<p class="er">Renseignez votre numéro de réception dans Profil pour être payé.</p>';
+ shell(`<a class="bk" href="#/orders">← Commandes</a><h2>${esc(o.listings?.title||'Commande')}</h2><p class="mu">${o.ref} · <span class="tag">${ST[st]}</span></p>
+ <div class="box">Prix ${F(o.item_price)}${sel?`<br>Commission Troky ${F(o.commission)}<br><b>Vous recevez ${F(o.seller_amount)}</b>`:''}</div>
+ <div class="steps">${steps.map(([n,a])=>`<div class="${a.includes(st)?'ok':''}"><i></i>${n}</div>`).join('')}</div>
+ ${st==='expediee'&&o.auto_validate_at?`<p class="mu">Validation automatique le ${new Date(o.auto_validate_at).toLocaleDateString('fr-FR')} sans signalement.</p>`:''}${act}`,'/orders');
+ const rpc=async(n,a)=>{const {error}=await SB.rpc(n,a);if(error)alert(error.message);order(id)};
+ if($('#pd'))$('#pd').onclick=()=>{const rf=$('#rf').value.trim();if(!rf)return alert('Indiquez la référence de la transaction.');rpc('buyer_declare_paid',{p_order:id,p_operator:$('#op').value,p_reference:rf})};
+ if($('#sh'))$('#sh').onclick=()=>rpc('seller_mark_shipped',{p_order:id});
+ if($('#rc'))$('#rc').onclick=()=>confirm('Confirmer que vous avez bien reçu l’article ?')&&rpc('buyer_confirm_received',{p_order:id});
+ if($('#ds'))$('#ds').onclick=()=>{const r=prompt('Décrivez le problème');if(r)rpc('buyer_open_dispute',{p_order:id,p_reason:r})};
+}
+
+function authView(){
+ let su=false;
+ const draw=()=>{shell(`<span class="logo">Troky</span><h2>${su?'Créer mon compte':'Connexion'}</h2>
+ ${su?'<label>Nom complet<input id="n" class="in"></label><label>Téléphone<input id="ph" class="in" inputmode="tel"></label><label>Ville<input id="ci" class="in"></label>':''}
+ <label>Adresse e-mail<input id="em" class="in" type="email"></label><label>Mot de passe (6 caractères minimum)<input id="pw" class="in" type="password"></label>
+ <button class="btn" id="ok">${su?'Créer mon compte':'Se connecter'}</button><button class="lk" id="sw">${su?'J’ai déjà un compte':'Créer un compte'}</button>`,'/profile');
+  $('#sw').onclick=()=>{su=!su;draw()};
+  $('#ok').onclick=async()=>{const email=$('#em').value.trim(),password=$('#pw').value;
+   if(su){const n=$('#n').value.trim();if(!n||!email||password.length<6)return alert('Complétez le nom, l’e-mail et un mot de passe de 6 caractères minimum.');
+    const {data,error}=await SB.auth.signUp({email,password,options:{data:{full_name:n,phone:$('#ph').value.trim(),city:$('#ci').value.trim()}}});
+    if(error)return alert(error.message);
+    if(data.session){location.hash='/';location.reload()}else{alert('Compte créé. Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous.');su=false;draw()}
+   }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error)return alert('E-mail ou mot de passe incorrect.');location.hash='/';location.reload()}}};
+ draw();
+}
+function profile(){
+ if(!S.me)return authView();const p=S.p;
+ shell(`<h2>Mon profil</h2><p class="mu">${esc(S.me.email)}</p>
+ <label>Nom<input id="n" class="in" value="${esc(p.full_name)}"></label><label>Téléphone<input id="ph" class="in" value="${esc(p.phone)}"></label><label>Ville<input id="ci" class="in" value="${esc(p.city)}"></label>
+ <h3>Pour recevoir vos paiements</h3><label>Opérateur<select id="po">${['Wave','Orange Money','Free Money'].map(o=>`<option ${p.payout_operator===o?'selected':''}>${o}</option>`).join('')}</select></label>
+ <label>Numéro<input id="pn" class="in" value="${esc(p.payout_number)}"></label><button class="btn" id="sv">Enregistrer</button>
+ <a class="box blk" href="#/mine">Mes annonces</a>${p.role==='admin'?'<a class="box blk" href="#/admin">Administration</a>':''}<button class="btn o" id="lo">Se déconnecter</button>`,'/profile');
+ $('#sv').onclick=async()=>{const {error}=await SB.from('profiles').update({full_name:$('#n').value.trim(),phone:$('#ph').value.trim()||null,city:$('#ci').value.trim(),payout_operator:$('#po').value,payout_number:$('#pn').value.trim()||null}).eq('id',S.me.id);
+  if(error)return alert(error.message);await boot();alert('Profil enregistré.')};
+ $('#lo').onclick=async()=>{await SB.auth.signOut();location.hash='/';location.reload()};
+}
+
+async function admin(){
+ if(!S.p||S.p.role!=='admin')return go('/');
+ const [L,O,P,PR,DS,PM]=await Promise.all([
+  SB.from('listings').select('*,listing_photos(url,position)').eq('status','en_attente').order('created_at'),
+  SB.from('orders').select('*,listings(title)').eq('status','en_attente_paiement').order('created_at'),
+  SB.from('payouts').select('*,orders(ref)').eq('status','a_faire'),
+  SB.from('profiles').select('id,full_name,phone'),
+  SB.from('orders').select('*,listings(title)').eq('status','litige'),
+  SB.from('payments').select('*').eq('status','declare')]);
+ const nm=id=>esc((PR.data.find(p=>p.id===id)||{}).full_name||'?'),pm=id=>(PM.data||[]).filter(p=>p.order_id===id).map(p=>`${esc(p.operator)} · réf. ${esc(p.reference)}`).join(', ')||'Aucun paiement déclaré';
+ const bt=(f,id,t,o)=>`<button class="btn s ${o?'o':''}" data-f="${f}" data-id="${id}">${t}</button>`;
+ const sec=(t,a,e)=>`<h3>${t} (${a.length})</h3>${a.join('')||`<p class="mu">${e}</p>`}`;
+ shell(`<a class="bk" href="#/profile">← Profil</a><h2>Administration</h2>
+ ${sec('Annonces à valider',L.data.map(l=>`<div class="box"><div class="row2"><a href="#/l/${l.id}" class="th">${ph(l)}</a><div><b>${esc(l.title)}</b><br>${F(l.price)} · ${nm(l.seller_id)}<br><small>${esc(l.description).slice(0,120)}</small></div></div><div class="row">${bt('ok',l.id,'Publier')}${bt('no',l.id,'Refuser',1)}</div></div>`),'Rien à valider.')}
+ ${sec('Paiements à confirmer',O.data.map(o=>`<div class="box"><b>${o.ref}</b> · ${esc(o.listings?.title)}<br>${F(o.item_price)} · acheteur ${nm(o.buyer_id)}<br><small>${pm(o.id)}</small><div class="row">${bt('paid',o.id,'Paiement reçu')}${bt('cancel',o.id,'Annuler',1)}</div></div>`),'Aucun paiement en attente.')}
+ ${sec('Reversements à faire',P.data.map(p=>`<div class="box"><b>${F(p.amount)}</b> pour ${nm(p.seller_id)} (${p.orders?.ref})<br>${esc(p.operator||'?')} · ${esc(p.account_number||'numéro manquant')}${bt('pay',p.id,'Reversement fait')}</div>`),'Aucun reversement.')}
+ ${sec('Litiges',DS.data.map(o=>`<div class="box"><b>${o.ref}</b> · ${esc(o.listings?.title)} · ${F(o.item_price)}<div class="row">${bt('refund',o.id,'Rembourser l’acheteur')}${bt('seller',o.id,'Payer le vendeur',1)}</div></div>`),'Aucun litige.')}
+ <h3>Réglages</h3><label>Opérateur de paiement<input id="s_payment_operator" class="in" value="${esc(S.cfg.payment_operator)}"></label><label>Numéro de paiement<input id="s_payment_number" class="in" value="${esc(S.cfg.payment_number)}"></label>
+ <label>Commission (0.08 = 8 %)<input id="s_commission_rate" class="in" value="${esc(S.cfg.commission_rate)}"></label><label>Validation automatique (jours)<input id="s_auto_validate_days" class="in" value="${esc(S.cfg.auto_validate_days)}"></label>
+ <button class="btn" data-f="cfg">Enregistrer les réglages</button><button class="btn o" data-f="auto">Lancer la validation automatique</button>`,'/profile');
+}
+A.onclick=async e=>{
+ const b=e.target.closest('[data-f]');if(!b)return;const f=b.dataset.f,id=b.dataset.id;let n,a={};
+ if(f==='cfg'){for(const k of['payment_operator','payment_number','commission_rate','auto_validate_days']){const {error}=await SB.from('settings').update({value:$('#s_'+k).value.trim()}).eq('key',k);if(error)return alert(error.message)}await boot();alert('Réglages enregistrés.');return admin()}
+ if(f==='ok'){n='admin_review_listing';a={p_listing:id,p_approve:true}}
+ else if(f==='no'){const r=prompt('Motif du refus');if(!r)return;n='admin_review_listing';a={p_listing:id,p_approve:false,p_reason:r}}
+ else if(f==='paid'){n='admin_mark_paid';a={p_order:id}}
+ else if(f==='cancel'){if(!confirm('Annuler cette commande ?'))return;n='admin_cancel_order';a={p_order:id}}
+ else if(f==='pay'){const r=prompt('Référence du transfert (facultatif)');if(r===null)return;n='admin_complete_payout';a={p_payout:id,p_ref:r||null}}
+ else if(f==='refund'||f==='seller'){n='admin_resolve_dispute';a={p_order:id,p_refund:f==='refund'}}
+ else if(f==='auto')n='auto_validate_orders';else return;
+ const {data,error}=await SB.rpc(n,a);if(error)return alert(error.message);if(f==='auto')alert(data+' commande(s) validée(s).');admin();
+};
+addEventListener('hashchange',route);
+boot().then(route);
+</script></body></html>
