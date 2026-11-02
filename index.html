@@ -293,7 +293,7 @@ function forgotView(mail){
  $('#fs').onclick=async e=>{const m=$('#fm').value.trim();if(!/^\S+@\S+\.\S+$/.test(m))return alert('Indiquez une adresse e-mail valide.');e.target.disabled=true;
   const {error}=await SB.auth.resetPasswordForEmail(m,{redirectTo:'https://troky0201.github.io/Troky/'});
   if(error&&/rate|limit|seconds/i.test(error.message)){e.target.disabled=false;return alert('Trop de demandes pour le moment. Réessayez un peu plus tard.')}
-  shell(`<h2>Vérifiez vos e-mails</h2><div class="box">Si un compte existe avec l’adresse ${esc(m)}, un lien vient d’être envoyé. Pensez à regarder dans les spams.</div><button class="lk" id="fb">Retour à la connexion</button>`,'/profile');$('#fb').onclick=authView};
+  shell(`<h2>Vérifiez vos e-mails</h2><div class="box">Si un compte existe avec l’adresse ${esc(m)}, un lien vient d’être envoyé. Vérifiez vos e-mails et vos spams.</div><button class="lk" id="fb">Retour à la connexion</button>`,'/profile');$('#fb').onclick=authView};
 }
 function resetView(){
  shell(`<h2>Nouveau mot de passe</h2><label>Nouveau mot de passe (6 caractères minimum)<input id="n1" class="in" type="password" minlength="6" autocomplete="new-password"></label><label>Confirmer le mot de passe<input id="n2" class="in" type="password" autocomplete="new-password"></label><p class="er" id="ne"></p><button class="btn" id="ns">Enregistrer</button><button class="lk" id="nc">Annuler</button>`,'/profile');
@@ -318,7 +318,7 @@ function authView(){
    if(su){const n=$('#n').value.trim();if(!pwOk(password)){pwShow(true);$('#pw').focus();return}if(!n||!email)return alert('Complétez le nom et l’e-mail.');
     const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:'https://troky0201.github.io/Troky/',data:{full_name:n,phone:$('#ph').value.trim(),city:$('#ci').value.trim()}}});
     if(error)return alert(/password/i.test(error.message)?'Le mot de passe doit contenir au moins 6 caractères.':error.message);
-    if(data.session){location.hash='/';location.reload()}else{alert('Compte créé. Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous.');su=false;draw()}
+    if(data.session){location.hash='/';location.reload()}else{alert('Compte créé. Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous.\n\nVérifiez vos e-mails et vos spams.');su=false;draw()}
    }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error)return alert('E-mail ou mot de passe incorrect.');location.hash='/';location.reload()}}};
  draw();
 }
