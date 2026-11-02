@@ -4,9 +4,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#87492E">
 <title>Troky : vendre et acheter d’occasion au Sénégal</title>
 <meta name="description" content="Troky, le site pour vendre et acheter des articles d’occasion au Sénégal : mode, téléphones, maison, beauté. Annonces vérifiées et paiement protégé jusqu’à la réception.">
-<link rel="canonical" href="https://troky0201.github.io/Troky/">
-<meta property="og:type" content="website"><meta property="og:site_name" content="Troky"><meta property="og:locale" content="fr_SN"><meta property="og:url" content="https://troky0201.github.io/Troky/"><meta property="og:title" content="Troky : vendre et acheter d’occasion au Sénégal"><meta property="og:description" content="Troky, le site pour vendre et acheter des articles d’occasion au Sénégal : mode, téléphones, maison, beauté. Annonces vérifiées et paiement protégé jusqu’à la réception."><meta property="og:image" content="https://troky0201.github.io/Troky/icon-512.png">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Troky","url":"https://troky0201.github.io/Troky/","inLanguage":"fr"}</script>
+<link rel="canonical" href="https://trokysn.github.io/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Troky"><meta property="og:locale" content="fr_SN"><meta property="og:url" content="https://trokysn.github.io/"><meta property="og:title" content="Troky : vendre et acheter d’occasion au Sénégal"><meta property="og:description" content="Troky, le site pour vendre et acheter des articles d’occasion au Sénégal : mode, téléphones, maison, beauté. Annonces vérifiées et paiement protégé jusqu’à la réception."><meta property="og:image" content="https://trokysn.github.io/icon-512.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Troky","url":"https://trokysn.github.io/","inLanguage":"fr"}</script>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png"><meta name="apple-mobile-web-app-title" content="Troky"><meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 <style>
@@ -353,7 +353,7 @@ function forgotView(mail){
  shell(`<h2>Mot de passe oublié</h2><p class="mu">Indiquez votre e-mail : nous vous enverrons un lien pour choisir un nouveau mot de passe.</p><label>Adresse e-mail<input id="fm" class="in" type="email" value="${esc(mail)}"></label><button class="btn" id="fs">Recevoir le lien</button><button class="lk" id="fb">Retour à la connexion</button>`,'/profile');
  $('#fb').onclick=authView;
  $('#fs').onclick=async e=>{const m=$('#fm').value.trim();if(!/^\S+@\S+\.\S+$/.test(m))return alert('Indiquez une adresse e-mail valide.');e.target.disabled=true;
-  const {error}=await SB.auth.resetPasswordForEmail(m,{redirectTo:'https://troky0201.github.io/Troky/'});
+  const {error}=await SB.auth.resetPasswordForEmail(m,{redirectTo:'https://trokysn.github.io/'});
   if(error&&/rate|limit|seconds/i.test(error.message)){e.target.disabled=false;return alert('Trop de demandes pour le moment. Réessayez un peu plus tard.')}
   shell(`<h2>Vérifiez vos e-mails</h2><div class="box">Si un compte existe avec l’adresse ${esc(m)}, un lien vient d’être envoyé. Vérifiez vos e-mails et vos spams.</div><button class="lk" id="fb">Retour à la connexion</button>`,'/profile');$('#fb').onclick=authView};
 }
@@ -378,7 +378,7 @@ function authView(){
   if(su)$('#pw').oninput=()=>pwShow();
   $('#ok').onclick=async()=>{const email=$('#em').value.trim(),password=$('#pw').value;
    if(su){const n=$('#n').value.trim();if(!pwOk(password)){pwShow(true);$('#pw').focus();return}if(!n||!email)return alert('Complétez le nom et l’e-mail.');
-    const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:'https://troky0201.github.io/Troky/',data:{full_name:n,phone:$('#ph').value.trim(),city:$('#ci').value.trim()}}});
+    const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:'https://trokysn.github.io/',data:{full_name:n,phone:$('#ph').value.trim(),city:$('#ci').value.trim()}}});
     if(error)return alert(/password/i.test(error.message)?'Le mot de passe doit contenir au moins 6 caractères.':error.message);
     if(data.session){location.hash='/';location.reload()}else{alert('Compte créé. Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous.\n\nVérifiez vos e-mails et vos spams.');su=false;draw()}
    }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error)return alert('E-mail ou mot de passe incorrect.');location.hash='/';location.reload()}}};
