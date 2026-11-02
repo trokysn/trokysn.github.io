@@ -122,7 +122,10 @@ async function boot(){
  const [c,s]=await Promise.all([SB.from('categories').select('*').order('id'),SB.from('settings').select('*')]);
  S.cats=c.data||[];S.cfg=Object.fromEntries((s.data||[]).map(r=>[r.key,r.value]));
 }
+let CUR=location.hash,LAST='';
+const fromP=()=>LAST==='#/profile',backP=()=>fromP()?'<a class="bk" href="#/profile">← Profil</a>':'<a class="bk" href="#/">← Accueil</a>';
 async function route(){
+ if(location.hash!==CUR){LAST=CUR;CUR=location.hash}
  if(S.rec)return resetView();
  const a=location.hash.slice(1).split('/')[1]||'',b=location.hash.slice(1).split('/')[2];window.scrollTo(0,0);
  try{await ({'':home,l:()=>detail(b),new:newL,cart:cartV,notifs:notifsV,msgs:msgsV,c:()=>chatV(b),favs:favsV,edit:()=>editV(b),conditions:condV,contact:contactV,stock:()=>stockV(b),install:installV,g:()=>groupV(b),mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
@@ -213,7 +216,7 @@ const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platfo
 function instBanner(){if(isApp()||read('troky_inst'))return'';return `<div class="inst"><img src="icon-192.png" alt=""><div><b>Installez Troky</b><br>Gardez l’application sur votre écran d’accueil.</div><a class="btn a" id="ii" href="#/install" style="line-height:36px">Installer</a><button class="x" id="ix" aria-label="Fermer">×</button></div>`}
 async function installV(){
  const steps=isIOS()?['Ouvrez ce site dans <b>Safari</b>.','Touchez le bouton <b>Partager</b> (le carré avec une flèche vers le haut). Si vous ne le voyez pas, touchez d’abord <b>•••</b>.','Faites défiler, puis touchez <b>Sur l’écran d’accueil</b> (parfois sous <b>Plus</b>).','Touchez <b>Ajouter</b> : l’icône Troky apparaît sur votre téléphone.']:['Ouvrez ce site dans <b>Chrome</b>.','Touchez le menu <b>⋮</b> en haut à droite.','Touchez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>.','Confirmez : l’icône Troky apparaît sur votre téléphone.'];
- shell(`<a class="bk" href="#/">← Accueil</a><h2>Installer Troky</h2>${isApp()?'<div class="box">Troky est déjà installée sur cet appareil.</div>':`${IP?'<button class="btn" id="ig">Installer maintenant</button><p class="mu">Si rien ne s’affiche, suivez les étapes ci-dessous.</p>':''}<ol class="stp">${steps.map(x=>`<li>${x}</li>`).join('')}</ol><div class="box">C’est gratuit et rien n’est à télécharger depuis un magasin d’applications.</div>`}`,'');
+ shell(`${backP()}<h2>Installer Troky</h2>${isApp()?'<div class="box">Troky est déjà installée sur cet appareil.</div>':`${IP?'<button class="btn" id="ig">Installer maintenant</button><p class="mu">Si rien ne s’affiche, suivez les étapes ci-dessous.</p>':''}<ol class="stp">${steps.map(x=>`<li>${x}</li>`).join('')}</ol><div class="box">C’est gratuit et rien n’est à télécharger depuis un magasin d’applications.</div>`}`,'');
  if($('#ig'))$('#ig').onclick=async()=>{const e=IP;IP=null;e.prompt();await e.userChoice;installV()};
 }
 async function refreshBell(){if(!S.me)return;const {count,error}=await SB.from('notifications').select('id',{count:'exact',head:true}).eq('read',false);if(error)return;S.unread=count||0;const b=$('#bn0');if(b)b.textContent=S.unread||''}
@@ -236,7 +239,7 @@ async function notifsV(){
  if(need())return;
  const [{data,error},on]=await Promise.all([SB.from('notifications').select('*').order('created_at',{ascending:false}).limit(50),pushOn()]);if(error)throw error;
  const fmt=d=>new Date(d).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),un=data.some(n=>!n.read);
- shell(`<h2>Notifications</h2>
+ shell(`${fromP()?'<a class="bk" href="#/profile">← Profil</a>':''}<h2>Notifications</h2>
  ${on?'<div class="box">Les notifications sont activées sur cet appareil. <button class="rm" id="poff" style="display:block;color:var(--g)">Désactiver</button></div>':isIOS()&&!isApp()?'<div class="box">Pour les recevoir sur iPhone, installez d’abord Troky sur votre écran d’accueil.<a class="btn s a" href="#/install" style="line-height:38px">Installer Troky</a></div>':'<div class="box">Recevez aussi les alertes sur cet appareil, même quand Troky est fermée.<button class="btn s" id="pon">Activer les notifications</button></div>'}
  ${un?'<button class="lk2" id="all" style="padding:4px 0">Tout marquer comme lu</button>':''}
  ${data.map(n=>`<button class="nt ${n.read?'':'new'}" data-n="${n.id}" data-l="${esc(n.link||'')}"><b>${esc(n.title)}</b>${n.body?esc(n.body):''}<small>${fmt(n.created_at)}</small></button>`).join('')||'<p class="mu">Aucune notification pour le moment.</p>'}`,'/notifs');
@@ -400,7 +403,7 @@ async function msgsV(){
  const {data,error}=await SB.from('conversations').select('*,listings(title)').order('last_message_at',{ascending:false}).limit(100);if(error)throw error;
  const ids=[...new Set(data.flatMap(c=>[c.buyer_id,c.seller_id]))],{data:ps}=ids.length?await SB.from('public_profiles').select('id,full_name').in('id',ids):{data:[]},nm=id=>esc((ps||[]).find(p=>p.id===id)?.full_name||'Compte supprimé');
  const lab=c=>c.buyer_id===S.me.id?`Vendeur : ${nm(c.seller_id)}`:c.seller_id===S.me.id?`Acheteur : ${nm(c.buyer_id)}`:`${nm(c.buyer_id)} (acheteur) et ${nm(c.seller_id)} (vendeur)`;
- shell(`<h2>${adm?'Toutes les conversations':'Mes messages'}</h2>${adm?'<div class="box">En tant qu’administrateur, vous pouvez lire les conversations pour traiter les litiges.</div>':''}
+ shell(`<a class="bk" href="#${adm?'/admin':'/profile'}">← ${adm?'Administration':'Profil'}</a><h2>${adm?'Toutes les conversations':'Mes messages'}</h2>${adm?'<div class="box">En tant qu’administrateur, vous pouvez lire les conversations pour traiter les litiges.</div>':''}
  ${data.map(c=>`<a class="box blk" href="#/c/${c.id}"><b>${esc(c.listings?.title||'Annonce')}</b><br><small>${lab(c)}</small></a>`).join('')||'<p class="mu">Aucune conversation. Ouvrez une annonce et touchez « Contacter le vendeur ».</p>'}`,'/msgs');
 }
 async function chatV(id){
@@ -432,7 +435,7 @@ async function chatV(id){
  if($('#ms')){$('#ms').onclick=send;$('#mt').onkeydown=e=>{if(e.key==='Enter')send()}}
  if($('#ofr'))$('#ofr').onclick=async()=>{const v=prompt(`Votre offre en FCFA (prix affiché : ${F(l.price)})`);if(v===null)return;const n=+String(v).replace(/\s/g,'');if(!Number.isInteger(n)||n<=0)return alert('Indiquez un montant valide.');if(n>=l.price)return alert('Votre offre doit être inférieure au prix affiché.');const {error:e}=await SB.from('offers').insert({conversation_id:id,amount:n});if(e)return alert(e.message);load()};
 }
-const condV=()=>shell(`<a class="bk" href="#${AUTHD?'/profile':'/'}">${AUTHD?'← Retour à l’inscription':'← Accueil'}</a><div class="legal"><h2>Conditions d’utilisation</h2><p class="mu"><small>Assistance Troky, Dakar. Dernière mise à jour : novembre 2026.</small></p>
+const condV=()=>shell(`${AUTHD?'<a class="bk" href="#/profile">← Retour à l’inscription</a>':backP()}<div class="legal"><h2>Conditions d’utilisation</h2><p class="mu"><small>Assistance Troky, Dakar. Dernière mise à jour : novembre 2026.</small></p>
 <h3>1. Le service</h3><p>Troky met en relation des vendeurs et des acheteurs au Sénégal. Le vendeur reste responsable de son article et de sa description. Troky reçoit le paiement de l’acheteur, puis le reverse au vendeur après la réception.</p>
 <h3>2. Compte</h3><p>Vos informations doivent être exactes. Pour publier, un téléphone et un numéro de paiement sont obligatoires. Vous pouvez supprimer votre compte dans Profil lorsque aucune commande n’est en cours ; l’historique des ventes est conservé sans données personnelles.</p>
 <h3>3. Annonces</h3><p>Chaque annonce est vérifiée avant publication et peut être refusée ou retirée.</p><p><b>Sont interdits :</b> armes, drogues, médicaments, alcool, contrefaçons, objets volés, contenus pour adultes, animaux, et tout article dont la vente est interdite par la loi.</p>
@@ -444,7 +447,7 @@ const condV=()=>shell(`<a class="bk" href="#${AUTHD?'/profile':'/'}">${AUTHD?'�
 <h3>9. Remboursement et reversement</h3><p>Le vendeur est payé après la réception. Lorsqu’un remboursement est décidé, l’acheteur récupère la totalité du prix payé à Troky, commission comprise, sous 2 jours ouvrables.</p>
 <h3>10. Messagerie et données</h3><p>Les numéros de téléphone et les adresses e-mail sont masqués automatiquement. <b>L’équipe Troky peut lire les conversations, notamment pour traiter les litiges.</b> Vos données servent uniquement à faire fonctionner le service et ne sont pas vendues.</p>
 <h3>11. Contact</h3><p>Assistance Troky, Dakar : <a style="color:var(--g);font-weight:600" href="https://wa.me/221778366154">WhatsApp 77 836 61 54</a>.</p></div>`,'');
-const contactV=()=>shell(`<a class="bk" href="#/">← Accueil</a><h2>Contact</h2><div class="box"><b>Assistance Troky</b><br>Dakar, Sénégal</div><a class="btn a" href="https://wa.me/221778366154" target="_blank" rel="noopener">Écrire sur WhatsApp : 77 836 61 54</a><p class="mu">Pour un problème sur une commande, utilisez aussi « Signaler un problème » sur la page de la commande.</p>`,'');
+const contactV=()=>shell(`${backP()}<h2>Contact</h2><div class="box"><b>Assistance Troky</b><br>Dakar, Sénégal</div><a class="btn a" href="https://wa.me/221778366154" target="_blank" rel="noopener">Écrire sur WhatsApp : 77 836 61 54</a><p class="mu">Pour un problème sur une commande, utilisez aussi « Signaler un problème » sur la page de la commande.</p>`,'');
 async function orders(){
  if(need())return;
  const {data}=await SB.from('orders').select('*,listings(title)').or(`buyer_id.eq.${S.me.id},seller_id.eq.${S.me.id}`).order('created_at',{ascending:false});
