@@ -81,6 +81,7 @@ nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#FDF9F4;borde
 .chk{display:flex!important;gap:8px;align-items:flex-start;font-weight:500;font-size:13px;margin:0 0 8px}.chk input{margin-top:3px}.chk a{color:var(--g);text-decoration:underline}
 .star{letter-spacing:1px;color:#B8693F}
 @media(min-width:900px){.cmp{bottom:0}}
+.pubw{position:fixed;inset:0;z-index:50;background:rgba(59,30,16,.55);display:flex;align-items:center;justify-content:center;padding:24px 20px}.pubb{position:relative;width:auto;max-width:min(88vw,460px)}.pubb img{display:block;width:auto;max-width:100%;max-height:82vh;max-height:82dvh;border-radius:16px;box-shadow:0 10px 36px rgba(0,0,0,.35)}.pubx{position:absolute;top:-14px;right:-14px;width:44px;height:44px;border:0;border-radius:50%;background:#FDF9F4;color:#3B1E10;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 </style></head><body><div id="app"><noscript><h1>Troky : vendre et acheter d’occasion au Sénégal</h1><p>Troky, le site pour vendre et acheter des articles d’occasion au Sénégal : mode, téléphones, maison, beauté. Annonces vérifiées et paiement protégé jusqu’à la réception.</p></noscript></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -170,7 +171,7 @@ async function home(){
  <div class="rnd">${S.cats.map(c=>`<button data-cat="${c.id}"><i>${line(CI[c.name]||CI.Autres)}${pimg(CP[c.name],300)}</i>${esc(c.name)}</button>`).join('')}</div>`;
  shell(`${filt?'':(instBanner()||notifBanner())}${top}<div class="sect" id="nv"><h2>${q?`Résultats pour « ${esc(q)} »`:cat?esc(cn):'Nouveautés'}</h2>${filt?'<button class="lk2" id="clr">Tout voir</button>':''}</div>
  <div class="grid">${data.map(card).join('')||`<p class="mu">${filt?'Aucun article trouvé.':'Aucune annonce pour le moment.'}</p>`}</div>${isApp()?'':'<a class="lk" style="display:block;text-align:center;margin-top:18px" href="#/install">Installer l’application sur mon téléphone</a>'}<div class="ftr"><a href="#/conditions">Conditions d’utilisation</a><a href="#/contact">Contact</a></div>${filt?'':'<section class="mu" style="margin-top:22px;font-size:13px"><h2 style="font-size:18px;color:var(--t)">Vendez et achetez d’occasion au Sénégal</h2><p>Troky vous permet de donner une seconde vie à vos articles : vêtements, téléphones, objets pour la maison, produits de beauté et plus encore. Chaque annonce est vérifiée avant publication, et votre paiement est protégé jusqu’à la réception de l’article.</p></section>'}`,'/',{wide:true,bar});
- startHero();
+ startHero();if(S.me)showPub();
  if($('#ii'))$('#ii').onclick=async e=>{if(!IP)return;e.preventDefault();const x=IP;IP=null;x.prompt();const r=await x.userChoice;if(r.outcome==='accepted'){store('troky_inst','1');const b=$('.inst');if(b)b.remove()}};
  if($('#nb'))$('#nb').onclick=async()=>{if(await enablePush()){await refreshBell();home()}};
  if($('#nx'))$('#nx').onclick=()=>{store('troky_nb','1');$('.inst').remove()};
@@ -243,6 +244,17 @@ async function notifsV(){
  if($('#poff'))$('#poff').onclick=async()=>{await disablePush();notifsV()};
  if($('#all'))$('#all').onclick=async()=>{await SB.from('notifications').update({read:true}).eq('read',false);await refreshBell();notifsV()};
  document.querySelectorAll('[data-n]').forEach(b=>b.onclick=async()=>{await SB.from('notifications').update({read:true}).eq('id',b.dataset.n);await refreshBell();if(b.dataset.l)go(b.dataset.l);else notifsV()});
+}
+function showPub(){
+ const k='troky_pub_'+S.me.id;if(read(k)||document.querySelector('.pubw'))return;
+ const i=new Image();i.alt='Troky : achetez et vendez plus facilement';
+ i.onload=()=>{if(read(k)||document.querySelector('.pubw'))return;store(k,'1');
+  const w=document.createElement('div');w.className='pubw';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label','Bienvenue sur Troky');
+  const b=document.createElement('div');b.className='pubb';const x=document.createElement('button');x.className='pubx';x.textContent='×';x.setAttribute('aria-label','Fermer');
+  const close=()=>{w.remove();removeEventListener('keydown',esc)},esc=e=>{if(e.key==='Escape')close()};
+  x.onclick=close;w.onclick=e=>{if(e.target===w)close()};addEventListener('keydown',esc);
+  b.append(i,x);w.append(b);document.body.append(w);x.focus()};
+ i.src='pub-troky.jpg';
 }
 async function cartV(){
  let rows=[],gone=0;
