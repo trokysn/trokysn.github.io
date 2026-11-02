@@ -146,6 +146,7 @@ async function home(){
  shell(`${filt?'':instBanner()}${top}<div class="sect" id="nv"><h2>${q?`Résultats pour « ${esc(q)} »`:cat?esc(cn):'Nouveautés'}</h2>${filt?'<button class="lk2" id="clr">Tout voir</button>':''}</div>
  <div class="grid">${data.map(card).join('')||`<p class="mu">${filt?'Aucun article trouvé.':'Aucune annonce pour le moment.'}</p>`}</div>${isApp()?'':'<a class="lk" style="display:block;text-align:center;margin-top:18px" href="#/install">Installer l’application sur mon téléphone</a>'}`,'/',{wide:true,bar});
  startHero();
+ if($('#ii'))$('#ii').onclick=async e=>{if(!IP)return;e.preventDefault();const x=IP;IP=null;x.prompt();const r=await x.userChoice;if(r.outcome==='accepted'){store('troky_inst','1');const b=$('.inst');if(b)b.remove()}};
  if($('#ix'))$('#ix').onclick=()=>{store('troky_inst','1');$('.inst').remove()};
  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{cat=+b.dataset.cat;home();window.scrollTo(0,0)});
  const go2=document.querySelector('[data-go]');if(go2)go2.onclick=()=>$('#nv').scrollIntoView({behavior:'smooth'});
@@ -169,9 +170,9 @@ let IP=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();IP=e})
 const store=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},read=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const isApp=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-function instBanner(){if(isApp()||read('troky_inst'))return'';return `<div class="inst"><img src="icon-192.png" alt=""><div><b>Installez Troky</b><br>Gardez l’application sur votre écran d’accueil.</div><a class="btn a" href="#/install" style="line-height:36px">Installer</a><button class="x" id="ix" aria-label="Fermer">×</button></div>`}
+function instBanner(){if(isApp()||read('troky_inst'))return'';return `<div class="inst"><img src="icon-192.png" alt=""><div><b>Installez Troky</b><br>Gardez l’application sur votre écran d’accueil.</div><a class="btn a" id="ii" href="#/install" style="line-height:36px">Installer</a><button class="x" id="ix" aria-label="Fermer">×</button></div>`}
 async function installV(){
- const steps=isIOS()?['Ouvrez ce site dans <b>Safari</b>.','Touchez le bouton <b>Partager</b> (le carré avec une flèche vers le haut).','Faites défiler, puis touchez <b>Sur l’écran d’accueil</b>.','Touchez <b>Ajouter</b> : l’icône Troky apparaît sur votre téléphone.']:['Ouvrez ce site dans <b>Chrome</b>.','Touchez le menu <b>⋮</b> en haut à droite.','Touchez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>.','Confirmez : l’icône Troky apparaît sur votre téléphone.'];
+ const steps=isIOS()?['Ouvrez ce site dans <b>Safari</b>.','Touchez le bouton <b>Partager</b> (le carré avec une flèche vers le haut). Si vous ne le voyez pas, touchez d’abord <b>•••</b>.','Faites défiler, puis touchez <b>Sur l’écran d’accueil</b> (parfois sous <b>Plus</b>).','Touchez <b>Ajouter</b> : l’icône Troky apparaît sur votre téléphone.']:['Ouvrez ce site dans <b>Chrome</b>.','Touchez le menu <b>⋮</b> en haut à droite.','Touchez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>.','Confirmez : l’icône Troky apparaît sur votre téléphone.'];
  shell(`<a class="bk" href="#/">← Accueil</a><h2>Installer Troky</h2>${isApp()?'<div class="box">Troky est déjà installée sur cet appareil.</div>':`${IP?'<button class="btn" id="ig">Installer maintenant</button><p class="mu">Si rien ne s’affiche, suivez les étapes ci-dessous.</p>':''}<ol class="stp">${steps.map(x=>`<li>${x}</li>`).join('')}</ol><div class="box">C’est gratuit et rien n’est à télécharger depuis un magasin d’applications.</div>`}`,'');
  if($('#ig'))$('#ig').onclick=async()=>{const e=IP;IP=null;e.prompt();await e.userChoice;installV()};
 }
