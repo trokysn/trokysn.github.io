@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#87492E">
 <title>Troky</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png"><meta name="apple-mobile-web-app-title" content="Troky"><meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}:root{--g:#87492E;--t:#3B1E10;--m:#7A6552;--s:#F3E8DA;--l:#E6D8C6}
@@ -54,6 +55,13 @@ nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#FDF9F4;borde
 @media(max-width:599px){.sl.main svg{display:none}}
 @media(min-width:900px){.sl.main{padding-left:64px}.picks{right:64px;width:40%}.sl.main.hp h1,.sl.main.hp p{max-width:42%}.sl.main.hp h1{font-size:34px}.rnd i{margin-bottom:8px}}
 .sl.bg>img{object-position:center 25%}.ov{position:absolute;inset:0;background:linear-gradient(90deg,rgba(59,30,16,.82),rgba(59,30,16,.35))}.sl.main a.cta{text-decoration:none}.picks{z-index:1}.rnd i{position:relative}.rnd i img{position:absolute;inset:0}.tile svg{z-index:0}.tile img{z-index:1}.tile span{z-index:2}
+.cart{position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;color:#FDF3E4}.cart.on{color:#E3B97A}.cart svg{width:25px;height:25px}.cart em{position:absolute;top:-1px;right:-3px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#E3B97A;color:var(--t);font:700 11px/18px Inter,sans-serif;text-align:center}.cart em:empty{display:none}
+.im{position:relative}.add{position:absolute;right:8px;bottom:8px;width:36px;height:36px;border:0;border-radius:50%;background:#FDF9F4;color:var(--g);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(59,30,16,.25)}.add svg{width:19px;height:19px}.add.on{background:var(--g);color:#fff}
+.ci{align-items:center}.ci .inf{flex:1;min-width:0}.rm{background:none;border:0;color:#B3261E;font-weight:600;font-size:13px;padding:6px 0;cursor:pointer}.tot{display:flex;justify-content:space-between;font-size:18px;font-weight:700}
+.pay td,.pay th{padding:7px 4px;text-align:right;font-size:13px}.pay{width:100%;border-collapse:collapse}.pay td:first-child,.pay th:first-child{text-align:left}.pay tr+tr td{border-top:1px solid var(--l)}.pay small{display:block}.pay tfoot td{font-weight:700;border-top:2px solid var(--g)}
+.lin{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:13px}
+.inst{display:flex;align-items:center;gap:12px;background:var(--s);border-radius:14px;padding:10px 12px;margin:8px 0 12px}.inst img{width:42px;height:42px;border-radius:10px;flex:none}.inst div{flex:1;min-width:0;font-size:13px}.inst .btn{width:auto;height:36px;padding:0 14px;margin:0;font-size:13px;flex:none}.inst .x{background:none;border:0;color:var(--m);font-size:20px;line-height:1;padding:4px;cursor:pointer;flex:none}
+.stp{padding-left:22px}.stp li{margin:10px 0}
 </style></head><body><div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -67,14 +75,17 @@ const ST={brouillon:'Brouillon',en_attente:'En validation',publiee:'Publiée',re
 const CO={neuf:'Neuf',comme_neuf:'Comme neuf',tres_bon:'Très bon état',bon:'Bon état',correct:'État correct'};
 const pics=l=>(l.listing_photos||[]).slice().sort((a,b)=>a.position-b.position);
 const ph=l=>pics(l)[0]?`<img src="${esc(pics(l)[0].url)}" alt="">`:'<div class="np"></div>';
-const card=l=>`<a class="c" href="#/l/${l.id}"><div class="im">${ph(l)}</div><b>${esc(l.title)}</b><span class="pr">${F(l.price)}</span><small>${esc(l.city)} · ${CO[l.condition]||''}</small></a>`;
+const card=l=>`<a class="c" href="#/l/${l.id}"><div class="im">${ph(l)}${S.me&&S.me.id===l.seller_id?'':`<button class="add ${CART.includes(l.id)?'on':''}" data-add="${l.id}" aria-label="Ajouter au panier">${CARTI}</button>`}</div><b>${esc(l.title)}</b><span class="pr">${F(l.price)}</span><small>${esc(l.city)} · ${CO[l.condition]||''}</small></a>`;
 let heroT=null,q='',cat=0;
+const CKEY='troky_cart';let CART=[];try{const c=JSON.parse(localStorage.getItem(CKEY)||'[]');if(Array.isArray(c))CART=c}catch(e){}
+const saveCart=()=>{try{localStorage.setItem(CKEY,JSON.stringify(CART))}catch(e){}document.querySelectorAll('#cn0').forEach(x=>{x.textContent=CART.length||''})};
+const CARTI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11h10.2L20 7H6"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>';
 const NV=[['/','Accueil'],['/new','Vendre'],['/orders','Commandes'],['/profile']];
 const shell=(h,t,opt={})=>{clearInterval(heroT);const lab=r=>r==='/profile'?(S.me?'Profil':'Connexion'):NV.find(x=>x[0]===r)[1];
  A.innerHTML=`${opt.wide?'<div class="promo"><span><b>Paiement protégé</b> jusqu’à la réception</span><span><b>Annonces vérifiées</b> avant publication</span><span><b>Livraison</b> à convenir avec le vendeur</span></div>':''}
- <header class="top"><div class="in-w"><a href="#/" class="logo">Troky</a><form class="srch" id="sf"><input id="q" type="search" placeholder="Rechercher un article" value="${esc(q)}" aria-label="Rechercher"><button aria-label="Rechercher"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></form>
- <a href="#/new" class="sell-m">Vendre</a><div class="tl"><a href="#/orders" class="${t==='/orders'?'on':''}">Commandes</a><a href="#/profile" class="${t==='/profile'?'on':''}">${lab('/profile')}</a><a href="#/new" class="sell">Vendre un article</a></div></div>${opt.bar||''}</header>
- <div class="w ${opt.wide?'wide':''}">${h}</div><nav>${NV.map(([r])=>`<a href="#${r}" class="${t===r?'on':''}">${lab(r)}</a>`).join('')}</nav>`;
+ <header class="top"><div class="in-w"><a href="#/" class="logo" data-home>Troky</a><form class="srch" id="sf"><input id="q" type="search" placeholder="Rechercher un article" value="${esc(q)}" aria-label="Rechercher"><button aria-label="Rechercher"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></form>
+ <a href="#/new" class="sell-m">Vendre</a><div class="tl"><a href="#/" data-home class="${t==='/'?'on':''}">Accueil</a><a href="#/orders" class="${t==='/orders'?'on':''}">Commandes</a><a href="#/profile" class="${t==='/profile'?'on':''}">${lab('/profile')}</a><a href="#/new" class="sell">Vendre un article</a></div><a href="#/cart" class="cart ${t==='/cart'?'on':''}" aria-label="Panier">${CARTI}<em id="cn0">${CART.length||''}</em></a></div>${opt.bar||''}</header>
+ <div class="w ${opt.wide?'wide':''}">${h}</div><nav>${NV.map(([r])=>`<a href="#${r}" ${r==='/'?'data-home':''} class="${t===r?'on':''}">${lab(r)}</a>`).join('')}</nav>`;
  $('#sf').onsubmit=e=>{e.preventDefault();q=$('#q').value.trim();cat=0;if(['','#','#/'].includes(location.hash))home();else go('/')};
 };
 const need=()=>{if(!S.me){go('/profile');return true}};
@@ -88,7 +99,7 @@ async function boot(){
 async function route(){
  if(S.rec)return resetView();
  const a=location.hash.slice(1).split('/')[1]||'',b=location.hash.slice(1).split('/')[2];window.scrollTo(0,0);
- try{({'':home,l:()=>detail(b),new:newL,mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
+ try{await ({'':home,l:()=>detail(b),new:newL,cart:cartV,install:installV,g:()=>groupV(b),mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
  catch(e){shell(`<p class="er">Erreur : ${esc(e.message)}</p>`,'')}
 }
 
@@ -132,9 +143,10 @@ async function home(){
  const bar=`<div class="cbar"><div><button data-cat="0" class="${!cat?'on':''}">Tout</button>${S.cats.map(c=>`<button data-cat="${c.id}" class="${cat===c.id?'on':''}">${esc(c.name)}</button>`).join('')}</div></div>`;
  const top=filt?'':`<div class="hh"><div class="side">${tile('Mode femme')}${tile('Mode homme')}${tile('Maison')}</div><div class="mid">${heroHtml(rec)}</div><div class="side">${tile('Enfants')}${tile('Téléphones et électronique','Électronique')}${tile('Beauté')}</div></div>
  <div class="rnd">${S.cats.map(c=>`<button data-cat="${c.id}"><i>${line(CI[c.name]||CI.Autres)}${pimg(CP[c.name],300)}</i>${esc(c.name)}</button>`).join('')}</div>`;
- shell(`${top}<div class="sect" id="nv"><h2>${q?`Résultats pour « ${esc(q)} »`:cat?esc(cn):'Nouveautés'}</h2>${filt?'<button class="lk2" id="clr">Tout voir</button>':''}</div>
- <div class="grid">${data.map(card).join('')||`<p class="mu">${filt?'Aucun article trouvé.':'Aucune annonce pour le moment.'}</p>`}</div>`,'/',{wide:true,bar});
+ shell(`${filt?'':instBanner()}${top}<div class="sect" id="nv"><h2>${q?`Résultats pour « ${esc(q)} »`:cat?esc(cn):'Nouveautés'}</h2>${filt?'<button class="lk2" id="clr">Tout voir</button>':''}</div>
+ <div class="grid">${data.map(card).join('')||`<p class="mu">${filt?'Aucun article trouvé.':'Aucune annonce pour le moment.'}</p>`}</div>${isApp()?'':'<a class="lk" style="display:block;text-align:center;margin-top:18px" href="#/install">Installer l’application sur mon téléphone</a>'}`,'/',{wide:true,bar});
  startHero();
+ if($('#ix'))$('#ix').onclick=()=>{store('troky_inst','1');$('.inst').remove()};
  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{cat=+b.dataset.cat;home();window.scrollTo(0,0)});
  const go2=document.querySelector('[data-go]');if(go2)go2.onclick=()=>$('#nv').scrollIntoView({behavior:'smooth'});
  if($('#clr'))$('#clr').onclick=()=>{q='';cat=0;home()};
@@ -147,10 +159,58 @@ async function detail(id){
  <h2>${esc(l.title)}</h2><div class="pr big">${F(l.price)}</div><p class="mu">${CO[l.condition]||''} · ${esc(l.city)}</p><p>${esc(l.description)}</p>
  <div class="box"><b>${esc(s?.full_name||'Vendeur')}</b><br><small>${s?.rating_avg||0} sur 5 · ${s?.sales_count||0} ventes</small></div>
  <p class="mu">Paiement protégé jusqu’à la réception de l’article.</p>
- ${l.status!=='publiee'?`<span class="tag">${ST[l.status]}</span>`:own?'':'<button class="btn" id="buy">Acheter</button>'}`,'/');
+ ${l.status!=='publiee'?`<span class="tag">${ST[l.status]}</span>`:own?'':`<button class="btn" id="buy">Acheter maintenant</button><button class="btn o" id="tc">${CART.includes(id)?'Voir mon panier':'Ajouter au panier'}</button>`}`,'/');
+ if($('#tc'))$('#tc').onclick=e=>{if(CART.includes(id))return go('/cart');CART.push(id);saveCart();e.target.textContent='Voir mon panier'};
  const b=$('#buy');if(b)b.onclick=async()=>{if(!S.me)return go('/profile');b.disabled=true;
-  const {data,error}=await SB.rpc('create_order',{p_listing:id});if(error){alert(error.message);b.disabled=false;return}go('/o/'+data.id)};
+  const {data,error}=await SB.rpc('create_order',{p_listing:id});if(error){alert(error.message);b.disabled=false;return}CART=CART.filter(x=>x!==id);saveCart();go('/o/'+data.id)};
 }
+
+let IP=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();IP=e});addEventListener('appinstalled',()=>{IP=null;store('troky_inst','1')});
+const store=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},read=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const isApp=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function instBanner(){if(isApp()||read('troky_inst'))return'';return `<div class="inst"><img src="icon-192.png" alt=""><div><b>Installez Troky</b><br>Gardez l’application sur votre écran d’accueil.</div><a class="btn a" href="#/install" style="line-height:36px">Installer</a><button class="x" id="ix" aria-label="Fermer">×</button></div>`}
+async function installV(){
+ const steps=isIOS()?['Ouvrez ce site dans <b>Safari</b>.','Touchez le bouton <b>Partager</b> (le carré avec une flèche vers le haut).','Faites défiler, puis touchez <b>Sur l’écran d’accueil</b>.','Touchez <b>Ajouter</b> : l’icône Troky apparaît sur votre téléphone.']:['Ouvrez ce site dans <b>Chrome</b>.','Touchez le menu <b>⋮</b> en haut à droite.','Touchez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>.','Confirmez : l’icône Troky apparaît sur votre téléphone.'];
+ shell(`<a class="bk" href="#/">← Accueil</a><h2>Installer Troky</h2>${isApp()?'<div class="box">Troky est déjà installée sur cet appareil.</div>':`${IP?'<button class="btn" id="ig">Installer maintenant</button><p class="mu">Si rien ne s’affiche, suivez les étapes ci-dessous.</p>':''}<ol class="stp">${steps.map(x=>`<li>${x}</li>`).join('')}</ol><div class="box">C’est gratuit et rien n’est à télécharger depuis un magasin d’applications.</div>`}`,'');
+ if($('#ig'))$('#ig').onclick=async()=>{const e=IP;IP=null;e.prompt();await e.userChoice;installV()};
+}
+async function cartV(){
+ let items=[],gone=0;
+ if(CART.length){const {data,error}=await SB.from('listings').select('*,listing_photos(url,position)').in('id',CART).eq('status','publiee');if(error)throw error;
+  items=(data||[]).filter(l=>!(S.me&&S.me.id===l.seller_id));gone=CART.length-items.length;if(gone){CART=items.map(l=>l.id);saveCart()}}
+ const tot=items.reduce((a,l)=>a+l.price,0);
+ shell(`<h2>Mon panier</h2>${gone?`<div class="box">${gone} article${gone>1?'s ne sont':' n’est'} plus disponible${gone>1?'s':''} et ${gone>1?'ont été retirés':'a été retiré'}.</div>`:''}
+ ${items.map(l=>`<div class="row2 ci"><a href="#/l/${l.id}" class="th">${ph(l)}</a><div class="inf"><b>${esc(l.title)}</b><br><span class="pr">${F(l.price)}</span><br><button class="rm" data-rm="${l.id}">Retirer</button></div></div>`).join('')||'<p class="mu">Votre panier est vide.</p><a class="btn a" href="#/" data-home>Voir les articles</a>'}
+ ${items.length?`<div class="box"><div class="tot"><span>Total</span><span>${F(tot)}</span></div></div>${items.length>1?'<p class="mu">Vous payez le total en une seule fois. Chaque vendeur prépare ensuite son article.</p>':''}<button class="btn" id="chk">Commander</button>`:''}`,'/cart');
+ document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{CART=CART.filter(x=>x!==b.dataset.rm);saveCart();cartV()});
+ if($('#chk'))$('#chk').onclick=async e=>{if(!S.me)return go('/profile');e.target.disabled=true;e.target.textContent='Création…';
+  if(items.length===1){const {data,error}=await SB.rpc('create_order',{p_listing:items[0].id});if(error){alert(error.message);return cartV()}CART=[];saveCart();return go('/o/'+data.id)}
+  const {data,error}=await SB.rpc('create_group_order',{p_listings:items.map(l=>l.id)});
+  if(error){alert('Commande impossible : '+error.message);return cartV()}
+  CART=[];saveCart();go('/g/'+data.id)};
+}
+const copyTo=(b,t)=>{const lb=b.textContent;navigator.clipboard.writeText(t).then(()=>{b.textContent='Copié';setTimeout(()=>{b.textContent=lb},1500)},()=>alert(t))};
+async function groupV(id){
+ if(need())return;
+ const {data:g,error}=await SB.from('checkout_groups').select('*').eq('id',id).single();if(error)throw error;
+ const {data:os}=await SB.from('orders').select('*,listings(title)').eq('group_id',id).order('created_at');
+ const ids=(os||[]).map(o=>o.id),{data:pay}=ids.length?await SB.from('payments').select('*').in('order_id',ids):{data:[]};
+ const wait=(os||[]).filter(o=>o.status==='en_attente_paiement'),tot=wait.reduce((a,o)=>a+o.item_price,0);
+ let act='';
+ if(wait.length)act=(pay||[]).length?'<div class="box">Paiement déclaré. Il sera confirmé dès réception de l’argent.</div>':`<div class="box"><b>Payer ${F(tot)}</b><br>Envoyez ce montant par <b>${esc(S.cfg.payment_operator)}</b> au <b>${esc(S.cfg.payment_number)}</b>, au nom de <b>${esc(S.cfg.payment_name||'Troky SN')}</b>, avec la référence <b>${esc(g.ref)}</b>.<div class="row"><button class="btn s o" id="cn">Copier le numéro</button><button class="btn s o" id="ca">Copier le montant</button></div>${waveBtn({item_price:tot})}</div>
+  <label>Opérateur utilisé<select id="op"><option>Wave</option><option>Orange Money</option><option>Free Money</option></select></label><label>Référence de la transaction<input id="rf" class="in"></label><button class="btn" id="pd">J’ai payé</button>`;
+ shell(`<a class="bk" href="#/orders">← Commandes</a><h2>Paiement commun</h2><p class="mu">${esc(g.ref)} · ${(os||[]).length} articles</p>
+ ${(os||[]).map(o=>`<a class="box blk" href="#/o/${o.id}"><b>${esc(o.listings?.title||'Article')}</b><br>${F(o.item_price)} <span class="tag">${ST[o.status]}</span></a>`).join('')}${act}`,'/orders');
+ if($('#cn'))$('#cn').onclick=e=>copyTo(e.target,String(S.cfg.payment_number||'').replace(/\s/g,''));
+ if($('#ca'))$('#ca').onclick=e=>copyTo(e.target,String(tot));
+ if($('#pd'))$('#pd').onclick=async()=>{const rf=$('#rf').value.trim();if(!rf)return alert('Indiquez la référence de la transaction.');const {error:e}=await SB.rpc('buyer_declare_group_paid',{p_group:id,p_operator:$('#op').value,p_reference:rf});if(e)alert(e.message);groupV(id)};
+}
+A.addEventListener('click',e=>{
+ const a=e.target.closest('[data-add]');
+ if(a){e.preventDefault();const id=a.dataset.add;if(CART.includes(id)){CART=CART.filter(x=>x!==id);a.classList.remove('on')}else{CART.push(id);a.classList.add('on')}saveCart();return}
+ if(e.target.closest('[data-home]')){q='';cat=0;if(['','#','#/'].includes(location.hash)){e.preventDefault();home();window.scrollTo(0,0)}}
+});
 
 let D=null;
 async function shrink(f){const b=await createImageBitmap(f),k=Math.min(1,1200/Math.max(b.width,b.height)),c=document.createElement('canvas');c.width=b.width*k;c.height=b.height*k;c.getContext('2d').drawImage(b,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',.8))}
@@ -190,7 +250,7 @@ async function mine(){
 async function orders(){
  if(need())return;
  const {data}=await SB.from('orders').select('*,listings(title)').or(`buyer_id.eq.${S.me.id},seller_id.eq.${S.me.id}`).order('created_at',{ascending:false});
- shell(`<h2>Mes commandes</h2>${data.map(o=>`<a class="box blk" href="#/o/${o.id}"><b>${esc(o.listings?.title||'Article')}</b><br>${o.ref} · ${F(o.item_price)}<br><span class="tag">${ST[o.status]}</span> <small>${o.buyer_id===S.me.id?'Achat':'Vente'}</small></a>`).join('')||'<p class="mu">Aucune commande.</p>'}`,'/orders');
+ shell(`<h2>Mes commandes</h2>${data.map(o=>`<a class="box blk" href="#/o/${o.id}"><b>${esc(o.listings?.title||'Article')}</b><br>${o.ref} · ${F(o.item_price)}<br><span class="tag">${ST[o.status]}</span> <small>${o.buyer_id===S.me.id?'Achat':'Vente'}${o.group_id&&o.buyer_id===S.me.id?' · paiement commun':''}</small></a>`).join('')||'<p class="mu">Aucune commande.</p>'}`,'/orders');
 }
 function waveBtn(o){
  try{const u=new URL(S.cfg.wave_pay_link||'');if(u.protocol!=='https:')return'';u.searchParams.set('amount',o.item_price);
@@ -201,7 +261,8 @@ async function order(id){
  const [{data:o,error},{data:pay}]=await Promise.all([SB.from('orders').select('*,listings(title)').eq('id',id).single(),SB.from('payments').select('*').eq('order_id',id)]);if(error)throw error;
  const buy=o.buyer_id===S.me.id,sel=o.seller_id===S.me.id,st=o.status;let act='';
  const steps=[['Paiement',['payee','expediee','recue','terminee']],['Expédition',['expediee','recue','terminee']],['Réception',['recue','terminee']],['Terminée',['terminee']]];
- if(buy&&st==='en_attente_paiement')act=pay.length?'<div class="box">Paiement déclaré. Il sera confirmé dès réception de l’argent.</div>':`<div class="box"><b>Payer ${F(o.item_price)}</b><br>Envoyez ce montant par <b>${esc(S.cfg.payment_operator)}</b> au <b>${esc(S.cfg.payment_number)}</b> avec la référence <b>${o.ref}</b>.<div class="row"><button class="btn s o" id="cn">Copier le numéro</button><button class="btn s o" id="ca">Copier le montant</button></div>${waveBtn(o)}</div>
+ if(buy&&st==='en_attente_paiement'&&o.group_id)act=`<div class="box">Cet article fait partie d’un paiement commun.</div><a class="btn a" href="#/g/${o.group_id}">Voir le paiement</a>`;
+ else if(buy&&st==='en_attente_paiement')act=pay.length?'<div class="box">Paiement déclaré. Il sera confirmé dès réception de l’argent.</div>':`<div class="box"><b>Payer ${F(o.item_price)}</b><br>Envoyez ce montant par <b>${esc(S.cfg.payment_operator)}</b> au <b>${esc(S.cfg.payment_number)}</b>, au nom de <b>${esc(S.cfg.payment_name||'Troky SN')}</b>, avec la référence <b>${o.ref}</b>.<div class="row"><button class="btn s o" id="cn">Copier le numéro</button><button class="btn s o" id="ca">Copier le montant</button></div>${waveBtn(o)}</div>
   <label>Opérateur utilisé<select id="op"><option>Wave</option><option>Orange Money</option><option>Free Money</option></select></label><label>Référence de la transaction<input id="rf" class="in"></label><button class="btn" id="pd">J’ai payé</button>`;
  if(sel&&st==='payee')act='<button class="btn" id="sh">Article expédié</button>';
  if(buy&&st==='expediee')act='<button class="btn" id="rc">Réception confirmée</button>';
@@ -262,7 +323,7 @@ function profile(){
  <label>Nom<input id="n" class="in" value="${esc(p.full_name)}"></label><label>Téléphone<input id="ph" class="in" value="${esc(p.phone)}"></label><label>Ville<input id="ci" class="in" value="${esc(p.city)}"></label>
  <h3>Pour recevoir vos paiements</h3><label>Opérateur<select id="po">${['Wave','Orange Money','Free Money'].map(o=>`<option ${p.payout_operator===o?'selected':''}>${o}</option>`).join('')}</select></label>
  <label>Numéro<input id="pn" class="in" value="${esc(p.payout_number)}"></label><button class="btn" id="sv">Enregistrer</button>
- <a class="box blk" href="#/mine">Mes annonces</a>${p.role==='admin'?'<a class="box blk" href="#/admin">Administration</a>':''}<button class="btn o" id="lo">Se déconnecter</button>${p.role==='admin'?'':'<button class="danger" id="del">Supprimer mon compte</button>'}`,'/profile');
+ <a class="box blk" href="#/mine">Mes annonces</a><a class="box blk" href="#/install">Installer l’application</a>${p.role==='admin'?'<a class="box blk" href="#/admin">Administration</a>':''}<button class="btn o" id="lo">Se déconnecter</button>${p.role==='admin'?'':'<button class="danger" id="del">Supprimer mon compte</button>'}`,'/profile');
  if($('#del'))$('#del').onclick=delAccount;
  $('#sv').onclick=async()=>{const {error}=await SB.from('profiles').update({full_name:$('#n').value.trim(),phone:$('#ph').value.trim()||null,city:$('#ci').value.trim(),payout_operator:$('#po').value,payout_number:$('#pn').value.trim()||null}).eq('id',S.me.id);
   if(error)return alert(error.message);await boot();alert('Profil enregistré.')};
@@ -282,25 +343,40 @@ async function delAccount(){
 
 async function admin(){
  if(!S.p||S.p.role!=='admin')return go('/');
- const [L,O,P,PR,DS,PM,CT]=await Promise.all([
+ const [L,O,P,PR,DS,PM,CT,G,PG]=await Promise.all([
   SB.from('listings').select('*,listing_photos(url,position)').eq('status','en_attente').order('created_at'),
   SB.from('orders').select('*,listings(title)').eq('status','en_attente_paiement').order('created_at'),
-  SB.from('payouts').select('*,orders(ref)').eq('status','a_faire'),
-  SB.from('profiles').select('id,full_name,phone'),
+  SB.from('payouts').select('*,orders(ref,listings(title))').eq('status','a_faire'),
+  SB.from('profiles').select('id,full_name,phone,payout_operator,payout_number'),
   SB.from('orders').select('*,listings(title)').eq('status','litige'),
   SB.from('payments').select('*').eq('status','declare'),
-  SB.from('profiles').select('id',{count:'exact',head:true}).neq('status','deleted')]);
+  SB.from('profiles').select('id',{count:'exact',head:true}).neq('status','deleted'),
+  SB.from('checkout_groups').select('*'),
+  SB.from('orders').select('seller_id,seller_amount').in('status',['payee','expediee','litige'])]);
+ const prof=id=>PR.data.find(p=>p.id===id)||{};
+ const accts=id=>{const p=prof(id);return p.payout_number?`${esc(p.payout_operator||'?')} · ${esc(p.payout_number)}`:'<span class="er">numéro manquant</span>'};
+ const pend=O.data.filter(o=>o.group_id),groups=(G.data||[]).map(g=>({g,os:pend.filter(o=>o.group_id===g.id)})).filter(x=>x.os.length);
+ const groupCard=({g,os})=>{const by={};os.forEach(o=>{(by[o.seller_id]=by[o.seller_id]||{n:0,a:0,c:0,p:0});const b=by[o.seller_id];b.n++;b.a+=o.seller_amount;b.c+=o.commission;b.p+=o.item_price});const tot=os.reduce((a,o)=>a+o.item_price,0),com=os.reduce((a,o)=>a+o.commission,0),net=os.reduce((a,o)=>a+o.seller_amount,0),dec=[...new Set(os.flatMap(o=>(PM.data||[]).filter(p=>p.order_id===o.id).map(p=>`${esc(p.operator)} · réf. ${esc(p.reference)}`)))].join(', ')||'Aucun paiement déclaré';
+  return `<div class="box"><b>${esc(g.ref)}</b> · acheteur ${nm(g.buyer_id)}<br><b>${F(tot)}</b> à recevoir<br><small>${dec}</small>
+  <table class="pay"><thead><tr><th>Vendeur</th><th>Articles</th><th>À verser</th></tr></thead><tbody>${Object.entries(by).map(([id,b])=>`<tr><td>${nm(id)}<small>${accts(id)}</small></td><td>${b.n}</td><td>${F(b.a)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total vendeurs</td><td></td><td>${F(net)}</td></tr><tr><td>Commission Troky</td><td></td><td>${F(com)}</td></tr></tfoot></table>
+  <div class="row">${bt('paidg',g.id,'Paiement reçu')}${bt('cancelg',g.id,'Annuler',1)}</div></div>`};
+ const sellerIds=[...new Set([...P.data.map(p=>p.seller_id),...(PG.data||[]).map(o=>o.seller_id)])];
+ const owed=sellerIds.map(id=>({id,now:P.data.filter(p=>p.seller_id===id).reduce((a,p)=>a+p.amount,0),soon:(PG.data||[]).filter(o=>o.seller_id===id).reduce((a,o)=>a+o.seller_amount,0)}));
+ const owedTable=()=>owed.length?`<table class="pay"><thead><tr><th>Vendeur</th><th>À verser maintenant</th><th>Plus tard</th></tr></thead><tbody>${owed.map(x=>`<tr><td>${nm(x.id)}<small>${accts(x.id)}</small></td><td>${F(x.now)}</td><td>${F(x.soon)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td>${F(owed.reduce((a,x)=>a+x.now,0))}</td><td>${F(owed.reduce((a,x)=>a+x.soon,0))}</td></tr></tfoot></table><p class="mu"><small>« Plus tard » : articles payés, en attente de réception ou en litige.</small></p>`:'<p class="mu">Aucun montant à verser.</p>';
+ const payoutCards=()=>[...new Set(P.data.map(p=>p.seller_id))].map(id=>{const ps=P.data.filter(p=>p.seller_id===id),t=ps.reduce((a,p)=>a+p.amount,0);return `<div class="box"><b>${F(t)}</b> pour ${nm(id)}<br>${accts(id)}${ps.map(p=>`<div class="lin"><span>${esc(p.orders?.ref)} · ${esc(p.orders?.listings?.title||'')}</span><b>${F(p.amount)}</b></div>${bt('pay',p.id,'Reversement fait',1)}`).join('')}${ps.length>1?`<button class="btn s" data-f="payall" data-id="${id}" data-amt="${t}">Tout marquer comme versé (${F(t)})</button>`:''}</div>`});
  const nm=id=>esc((PR.data.find(p=>p.id===id)||{}).full_name||'?'),pm=id=>(PM.data||[]).filter(p=>p.order_id===id).map(p=>`${esc(p.operator)} · réf. ${esc(p.reference)}`).join(', ')||'Aucun paiement déclaré';
  const bt=(f,id,t,o)=>`<button class="btn s ${o?'o':''}" data-f="${f}" data-id="${id}">${t}</button>`;
  const sec=(t,a,e)=>`<h3>${t} (${a.length})</h3>${a.join('')||`<p class="mu">${e}</p>`}`;
  shell(`<a class="bk" href="#/profile">← Profil</a><h2>Administration</h2>
  <div class="stat"><b>${CT.count??'?'}</b>personnes inscrites<br><small style="color:#F6E3C8">Y compris les e-mails pas encore confirmés.</small></div>
  ${sec('Annonces à valider',L.data.map(l=>`<div class="box"><div class="row2"><a href="#/l/${l.id}" class="th">${ph(l)}</a><div><b>${esc(l.title)}</b><br>${F(l.price)} · ${nm(l.seller_id)}<br><small>${esc(l.description).slice(0,120)}</small></div></div><div class="row">${bt('ok',l.id,'Publier')}${bt('no',l.id,'Refuser',1)}</div></div>`),'Rien à valider.')}
- ${sec('Paiements à confirmer',O.data.map(o=>`<div class="box"><b>${o.ref}</b> · ${esc(o.listings?.title)}<br>${F(o.item_price)} · acheteur ${nm(o.buyer_id)}<br><small>${pm(o.id)}</small><div class="row">${bt('paid',o.id,'Paiement reçu')}${bt('cancel',o.id,'Annuler',1)}</div></div>`),'Aucun paiement en attente.')}
- ${sec('Reversements à faire',P.data.map(p=>`<div class="box"><b>${F(p.amount)}</b> pour ${nm(p.seller_id)} (${p.orders?.ref})<br>${esc(p.operator||'?')} · ${esc(p.account_number||'numéro manquant')}${bt('pay',p.id,'Reversement fait')}</div>`),'Aucun reversement.')}
+ ${sec('Paiements communs à confirmer',groups.map(groupCard),'Aucun paiement commun en attente.')}
+ ${sec('Paiements à confirmer',O.data.filter(o=>!o.group_id).map(o=>`<div class="box"><b>${o.ref}</b> · ${esc(o.listings?.title)}<br>${F(o.item_price)} · acheteur ${nm(o.buyer_id)}<br><small>${pm(o.id)}</small><div class="row">${bt('paid',o.id,'Paiement reçu')}${bt('cancel',o.id,'Annuler',1)}</div></div>`),'Aucun paiement en attente.')}
+ <h3>Montant à verser à chaque vendeur</h3>${owedTable()}
+ ${sec('Reversements à faire',payoutCards(),'Aucun reversement.')}
  ${sec('Litiges',DS.data.map(o=>`<div class="box"><b>${o.ref}</b> · ${esc(o.listings?.title)} · ${F(o.item_price)}<div class="row">${bt('refund',o.id,'Rembourser l’acheteur')}${bt('seller',o.id,'Payer le vendeur',1)}</div></div>`),'Aucun litige.')}
  <h3>Réglages</h3><label>Opérateur de paiement<input id="s_payment_operator" class="in" value="${esc(S.cfg.payment_operator)}"></label><label>Numéro de paiement<input id="s_payment_number" class="in" value="${esc(S.cfg.payment_number)}"></label>
- <label>Lien de paiement Wave Business (facultatif)<input id="s_wave_pay_link" class="in" placeholder="https://..." value="${esc(S.cfg.wave_pay_link)}"></label>
+ <label>Nom affiché au client pour le paiement<input id="s_payment_name" class="in" value="${esc(S.cfg.payment_name||'Troky SN')}"></label><label>Lien de paiement Wave Business (facultatif)<input id="s_wave_pay_link" class="in" placeholder="https://..." value="${esc(S.cfg.wave_pay_link)}"></label>
  <label>Commission (0.08 = 8 %)<input id="s_commission_rate" class="in" value="${esc(S.cfg.commission_rate)}"></label><label>Validation automatique (jours)<input id="s_auto_validate_days" class="in" value="${esc(S.cfg.auto_validate_days)}"></label>
  <button class="btn" data-f="cfg">Enregistrer les réglages</button>
  <h3>Images de la bannière d’accueil</h3><div class="ban">${heroList().map((u,i)=>`<div><img src="${esc(u)}" alt=""><button class="btn s o" data-f="hdel" data-id="${i}">Retirer</button></div>`).join('')||'<p class="mu">Aucune image pour le moment.</p>'}</div><label>Ajouter des images<input id="hf" class="in" type="file" accept="image/*" multiple></label><button class="btn o" data-f="auto">Lancer la validation automatique</button>`,'/profile');
@@ -311,11 +387,14 @@ async function admin(){
 const saveCfg=(key,value)=>SB.from('settings').upsert({key,value});
 A.onclick=async e=>{
  const b=e.target.closest('[data-f]');if(!b)return;const f=b.dataset.f,id=b.dataset.id;let n,a={};
- if(f==='cfg'){for(const k of['payment_operator','payment_number','wave_pay_link','commission_rate','auto_validate_days']){const {error}=await saveCfg(k,$('#s_'+k).value.trim());if(error)return alert(error.message)}await boot();alert('Réglages enregistrés.');return admin()}
+ if(f==='cfg'){for(const k of['payment_operator','payment_number','payment_name','wave_pay_link','commission_rate','auto_validate_days']){const {error}=await saveCfg(k,$('#s_'+k).value.trim());if(error)return alert(error.message)}await boot();alert('Réglages enregistrés.');return admin()}
+ if(f==='payall'){const r=prompt('Vous confirmez avoir versé '+F(b.dataset.amt)+' à ce vendeur ?\nRéférence du transfert (facultatif)');if(r===null)return;const {data:ps,error:e0}=await SB.from('payouts').select('id').eq('seller_id',id).eq('status','a_faire');if(e0)return alert(e0.message);for(const x of ps){const {error}=await SB.rpc('admin_complete_payout',{p_payout:x.id,p_ref:r||null});if(error){alert(error.message);break}}return admin()}
  if(f==='hdel'){const a=heroList(),[u]=a.splice(+id,1),{error}=await saveCfg('hero_images',JSON.stringify(a));if(error)return alert(error.message);const m=String(u).split('/listing-photos/')[1];if(m)await SB.storage.from('listing-photos').remove([decodeURIComponent(m)]);await boot();return admin()}
  if(f==='ok'){n='admin_review_listing';a={p_listing:id,p_approve:true}}
  else if(f==='no'){const r=prompt('Motif du refus');if(!r)return;n='admin_review_listing';a={p_listing:id,p_approve:false,p_reason:r}}
  else if(f==='paid'){n='admin_mark_paid';a={p_order:id}}
+ else if(f==='paidg'){if(!confirm('Avez-vous bien reçu la totalité de ce paiement ?'))return;n='admin_mark_group_paid';a={p_group:id}}
+ else if(f==='cancelg'){if(!confirm('Annuler tout ce paiement commun ?'))return;n='admin_cancel_group';a={p_group:id}}
  else if(f==='cancel'){if(!confirm('Annuler cette commande ?'))return;n='admin_cancel_order';a={p_order:id}}
  else if(f==='pay'){const r=prompt('Référence du transfert (facultatif)');if(r===null)return;n='admin_complete_payout';a={p_payout:id,p_ref:r||null}}
  else if(f==='refund'||f==='seller'){n='admin_resolve_dispute';a={p_order:id,p_refund:f==='refund'}}
