@@ -123,7 +123,7 @@ async function boot(){
  S.cats=c.data||[];S.cfg=Object.fromEntries((s.data||[]).map(r=>[r.key,r.value]));
 }
 let CUR=location.hash,LAST='';
-const fromP=()=>LAST==='#/profile',backP=()=>fromP()?'<a class="bk" href="#/profile">← Profil</a>':'<a class="bk" href="#/">← Accueil</a>';
+const fromP=()=>LAST==='#/profile',backP=()=>S.me?'<a class="bk" href="#/profile">← Profil</a>':'<a class="bk" href="#/">← Accueil</a>';
 async function route(){
  if(location.hash!==CUR){LAST=CUR;CUR=location.hash}
  if(S.rec)return resetView();
@@ -239,7 +239,7 @@ async function notifsV(){
  if(need())return;
  const [{data,error},on]=await Promise.all([SB.from('notifications').select('*').order('created_at',{ascending:false}).limit(50),pushOn()]);if(error)throw error;
  const fmt=d=>new Date(d).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),un=data.some(n=>!n.read);
- shell(`${fromP()?'<a class="bk" href="#/profile">← Profil</a>':''}<h2>Notifications</h2>
+ shell(`<a class="bk" href="#/profile">← Profil</a><h2>Notifications</h2>
  ${on?'<div class="box">Les notifications sont activées sur cet appareil. <button class="rm" id="poff" style="display:block;color:var(--g)">Désactiver</button></div>':isIOS()&&!isApp()?'<div class="box">Pour les recevoir sur iPhone, installez d’abord Troky sur votre écran d’accueil.<a class="btn s a" href="#/install" style="line-height:38px">Installer Troky</a></div>':'<div class="box">Recevez aussi les alertes sur cet appareil, même quand Troky est fermée.<button class="btn s" id="pon">Activer les notifications</button></div>'}
  ${un?'<button class="lk2" id="all" style="padding:4px 0">Tout marquer comme lu</button>':''}
  ${data.map(n=>`<button class="nt ${n.read?'':'new'}" data-n="${n.id}" data-l="${esc(n.link||'')}"><b>${esc(n.title)}</b>${n.body?esc(n.body):''}<small>${fmt(n.created_at)}</small></button>`).join('')||'<p class="mu">Aucune notification pour le moment.</p>'}`,'/notifs');
@@ -249,9 +249,9 @@ async function notifsV(){
  document.querySelectorAll('[data-n]').forEach(b=>b.onclick=async()=>{await SB.from('notifications').update({read:true}).eq('id',b.dataset.n);await refreshBell();if(b.dataset.l)go(b.dataset.l);else notifsV()});
 }
 function showPub(){
- const k='troky_pub_'+S.me.id;if(read(k)||document.querySelector('.pubw'))return;
+ const k='troky_pub_show';if(read(k)!=='1'||document.querySelector('.pubw'))return;
  const i=new Image();i.alt='Troky : achetez et vendez plus facilement';
- i.onload=()=>{if(read(k)||document.querySelector('.pubw'))return;store(k,'1');
+ i.onload=()=>{if(read(k)!=='1'||document.querySelector('.pubw'))return;store(k,'0');
   const w=document.createElement('div');w.className='pubw';w.setAttribute('role','dialog');w.setAttribute('aria-modal','true');w.setAttribute('aria-label','Bienvenue sur Troky');
   const b=document.createElement('div');b.className='pubb';const x=document.createElement('button');x.className='pubx';x.textContent='×';x.setAttribute('aria-label','Fermer');
   const close=()=>{w.remove();removeEventListener('keydown',esc)},esc=e=>{if(e.key==='Escape')close()};
@@ -524,8 +524,8 @@ function authView(){
    if(su){const n=$('#n').value.trim();if(!pwOk(password)){pwShow(true);$('#pw').focus();return}if(!n||!email)return alert('Complétez le nom et l’e-mail.');if(!$('#cg').checked)return alert('Veuillez accepter les conditions d’utilisation.');
     const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:'https://trokysn.github.io/',data:{full_name:n,phone:$('#ph').value.trim(),city:$('#ci').value.trim()}}});
     if(error)return alert(/password/i.test(error.message)?'Le mot de passe doit contenir au moins 6 caractères.':error.message);
-    if(data.session){location.hash='/';location.reload()}else{alert('Compte créé. Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous.\n\nVérifiez vos e-mails et vos spams.');su=false;draw()}
-   }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error)return alert('E-mail ou mot de passe incorrect.');location.hash='/';location.reload()}}};
+    if(data.session){store('troky_pub_show','1');location.hash='/';location.reload()}else{alert('Compte créé. Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous.\n\nVérifiez vos e-mails et vos spams.');su=false;draw()}
+   }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error)return alert('E-mail ou mot de passe incorrect.');store('troky_pub_show','1');location.hash='/';location.reload()}}};
  draw();
 }
 function profile(){
