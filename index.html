@@ -2,7 +2,11 @@
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#87492E">
-<title>Troky</title>
+<title>Troky : vendre et acheter d’occasion au Sénégal</title>
+<meta name="description" content="Troky, le site pour vendre et acheter des articles d’occasion au Sénégal : mode, téléphones, maison, beauté. Annonces vérifiées et paiement protégé jusqu’à la réception.">
+<link rel="canonical" href="https://troky0201.github.io/Troky/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Troky"><meta property="og:locale" content="fr_SN"><meta property="og:url" content="https://troky0201.github.io/Troky/"><meta property="og:title" content="Troky : vendre et acheter d’occasion au Sénégal"><meta property="og:description" content="Troky, le site pour vendre et acheter des articles d’occasion au Sénégal : mode, téléphones, maison, beauté. Annonces vérifiées et paiement protégé jusqu’à la réception."><meta property="og:image" content="https://troky0201.github.io/Troky/icon-512.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Troky","url":"https://troky0201.github.io/Troky/","inLanguage":"fr"}</script>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png"><meta name="apple-mobile-web-app-title" content="Troky"><meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 <style>
@@ -62,7 +66,7 @@ nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#FDF9F4;borde
 .lin{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:13px}
 .inst{display:flex;align-items:center;gap:12px;background:var(--s);border-radius:14px;padding:10px 12px;margin:8px 0 12px}.inst img{width:42px;height:42px;border-radius:10px;flex:none}.inst div{flex:1;min-width:0;font-size:13px}.inst .btn{width:auto;height:36px;padding:0 14px;margin:0;font-size:13px;flex:none}.inst .x{background:none;border:0;color:var(--m);font-size:20px;line-height:1;padding:4px;cursor:pointer;flex:none}
 .stp{padding-left:22px}.stp li{margin:10px 0}
-</style></head><body><div id="app"></div>
+</style></head><body><div id="app"><noscript><h1>Troky : vendre et acheter d’occasion au Sénégal</h1><p>Troky, le site pour vendre et acheter des articles d’occasion au Sénégal : mode, téléphones, maison, beauté. Annonces vérifiées et paiement protégé jusqu’à la réception.</p></noscript></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const HASH0=location.hash;
@@ -144,7 +148,7 @@ async function home(){
  const top=filt?'':`<div class="hh"><div class="side">${tile('Mode femme')}${tile('Mode homme')}${tile('Maison')}</div><div class="mid">${heroHtml(rec)}</div><div class="side">${tile('Enfants')}${tile('Téléphones et électronique','Électronique')}${tile('Beauté')}</div></div>
  <div class="rnd">${S.cats.map(c=>`<button data-cat="${c.id}"><i>${line(CI[c.name]||CI.Autres)}${pimg(CP[c.name],300)}</i>${esc(c.name)}</button>`).join('')}</div>`;
  shell(`${filt?'':instBanner()}${top}<div class="sect" id="nv"><h2>${q?`Résultats pour « ${esc(q)} »`:cat?esc(cn):'Nouveautés'}</h2>${filt?'<button class="lk2" id="clr">Tout voir</button>':''}</div>
- <div class="grid">${data.map(card).join('')||`<p class="mu">${filt?'Aucun article trouvé.':'Aucune annonce pour le moment.'}</p>`}</div>${isApp()?'':'<a class="lk" style="display:block;text-align:center;margin-top:18px" href="#/install">Installer l’application sur mon téléphone</a>'}`,'/',{wide:true,bar});
+ <div class="grid">${data.map(card).join('')||`<p class="mu">${filt?'Aucun article trouvé.':'Aucune annonce pour le moment.'}</p>`}</div>${isApp()?'':'<a class="lk" style="display:block;text-align:center;margin-top:18px" href="#/install">Installer l’application sur mon téléphone</a>'}${filt?'':'<section class="mu" style="margin-top:22px;font-size:13px"><h2 style="font-size:18px;color:var(--t)">Vendez et achetez d’occasion au Sénégal</h2><p>Troky vous permet de donner une seconde vie à vos articles : vêtements, téléphones, objets pour la maison, produits de beauté et plus encore. Chaque annonce est vérifiée avant publication, et votre paiement est protégé jusqu’à la réception de l’article.</p></section>'}`,'/',{wide:true,bar});
  startHero();
  if($('#ii'))$('#ii').onclick=async e=>{if(!IP)return;e.preventDefault();const x=IP;IP=null;x.prompt();const r=await x.userChoice;if(r.outcome==='accepted'){store('troky_inst','1');const b=$('.inst');if(b)b.remove()}};
  if($('#ix'))$('#ix').onclick=()=>{store('troky_inst','1');$('.inst').remove()};
