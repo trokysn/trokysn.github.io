@@ -432,7 +432,7 @@ async function chatV(id){
  if($('#ms')){$('#ms').onclick=send;$('#mt').onkeydown=e=>{if(e.key==='Enter')send()}}
  if($('#ofr'))$('#ofr').onclick=async()=>{const v=prompt(`Votre offre en FCFA (prix affiché : ${F(l.price)})`);if(v===null)return;const n=+String(v).replace(/\s/g,'');if(!Number.isInteger(n)||n<=0)return alert('Indiquez un montant valide.');if(n>=l.price)return alert('Votre offre doit être inférieure au prix affiché.');const {error:e}=await SB.from('offers').insert({conversation_id:id,amount:n});if(e)return alert(e.message);load()};
 }
-const condV=()=>shell(`<a class="bk" href="#/">← Accueil</a><div class="legal"><h2>Conditions d’utilisation</h2><p class="mu"><small>Assistance Troky, Dakar. Dernière mise à jour : novembre 2026.</small></p>
+const condV=()=>shell(`<a class="bk" href="#${AUTHD?'/profile':'/'}">${AUTHD?'← Retour à l’inscription':'← Accueil'}</a><div class="legal"><h2>Conditions d’utilisation</h2><p class="mu"><small>Assistance Troky, Dakar. Dernière mise à jour : novembre 2026.</small></p>
 <h3>1. Le service</h3><p>Troky met en relation des vendeurs et des acheteurs au Sénégal. Le vendeur reste responsable de son article et de sa description. Troky reçoit le paiement de l’acheteur, puis le reverse au vendeur après la réception.</p>
 <h3>2. Compte</h3><p>Vos informations doivent être exactes. Pour publier, un téléphone et un numéro de paiement sont obligatoires. Vous pouvez supprimer votre compte dans Profil lorsque aucune commande n’est en cours ; l’historique des ventes est conservé sans données personnelles.</p>
 <h3>3. Annonces</h3><p>Chaque annonce est vérifiée avant publication et peut être refusée ou retirée.</p><p><b>Sont interdits :</b> armes, drogues, médicaments, alcool, contrefaçons, objets volés, contenus pour adultes, animaux, et tout article dont la vente est interdite par la loi.</p>
@@ -504,12 +504,15 @@ function resetView(){
   if(error)return ne.textContent=/different/i.test(error.message)?'Choisissez un mot de passe différent de l’ancien.':/session|missing/i.test(error.message)?'Ce lien n’est plus valable. Demandez-en un nouveau.':error.message;
   S.rec=false;alert('Mot de passe modifié. Vous êtes connecté.');location.hash='/';location.reload()};
 }
+let AUTHD=null;
 function authView(){
- let su=false;
- const draw=()=>{shell(`<h2>${su?'Créer mon compte':'Connexion'}</h2>
+ let su=!!AUTHD;
+ const draw=()=>{shell(`${S.conf&&!su?'<div class="box"><b>Votre e-mail est confirmé.</b><br>Connectez-vous pour accéder à votre compte.</div>':''}<h2>${su?'Créer mon compte':'Connexion'}</h2>
  ${su?'<label>Nom complet<input id="n" class="in"></label><label>Téléphone<input id="ph" class="in" inputmode="tel"></label><label>Ville<input id="ci" class="in"></label>':''}
  <label>Adresse e-mail<input id="em" class="in" type="email"></label><label>Mot de passe${su?' (6 caractères minimum)':''}<input id="pw" class="in" type="password" ${su?'minlength="6" autocomplete="new-password"':'autocomplete="current-password"'}></label>${su?'<span class="hint" id="pwh">Au moins 6 caractères.</span>':''}
- ${su?'<label class="chk"><input id="cg" type="checkbox"><span>J’accepte les <a href="#/conditions">conditions d’utilisation</a>.</span></label>':''}<button class="btn" id="ok">${su?'Créer mon compte':'Se connecter'}</button>${su?'':'<button class="lk" id="fg">Mot de passe oublié ?</button>'}<button class="lk" id="sw">${su?'J’ai déjà un compte':'Créer un compte'}</button>`,'/profile');
+ ${su?'<label class="chk"><input id="cg" type="checkbox"><span>J’accepte les <a id="cgl" href="#/conditions">conditions d’utilisation</a>.</span></label>':''}<button class="btn" id="ok">${su?'Créer mon compte':'Se connecter'}</button>${su?'':'<button class="lk" id="fg">Mot de passe oublié ?</button>'}<button class="lk" id="sw">${su?'J’ai déjà un compte':'Créer un compte'}</button>`,'/profile');
+  if(AUTHD&&su){const a=AUTHD;AUTHD=null;$('#n').value=a.n;$('#ph').value=a.ph;$('#ci').value=a.ci;$('#em').value=a.em;$('#pw').value=a.pw;$('#cg').checked=a.cg}
+  if($('#cgl'))$('#cgl').onclick=()=>{AUTHD={n:$('#n').value,ph:$('#ph').value,ci:$('#ci').value,em:$('#em').value,pw:$('#pw').value,cg:$('#cg').checked}};
   $('#sw').onclick=()=>{su=!su;draw()};
   if($('#fg'))$('#fg').onclick=()=>forgotView($('#em').value.trim());
   const pwOk=v=>v.length>=6&&v.trim().length>0,pwShow=force=>{const h=$('#pwh');if(!h)return;const v=$('#pw').value,ok=pwOk(v),n=6-v.length;h.className='hint '+(ok?'good':(v||force)?'bad':'');h.textContent=ok?'Mot de passe valide.':n>0?(v?`Encore ${n} caractère${n>1?'s':''}.`:'Au moins 6 caractères.'):'Le mot de passe ne peut pas contenir que des espaces.'};
@@ -613,7 +616,9 @@ A.onclick=async e=>{
 addEventListener('hashchange',route);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 setInterval(()=>{if(!document.hidden)refreshBell()},60000);
-boot().then(()=>{S.ready=true;refreshBell();
+boot().then(async()=>{
+ if(/type=(signup|email)/.test(HASH0)){await SB.auth.signOut({scope:'local'});S.me=null;S.p=null;S.favs=new Set();S.conf=true;history.replaceState(null,'',location.pathname+'#/profile')}
+ S.ready=true;refreshBell();
  if(HASH0.includes('otp_expired')){alert('Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.');history.replaceState(null,'',location.pathname+'#/profile')}
  route()});
 </script></body></html>
