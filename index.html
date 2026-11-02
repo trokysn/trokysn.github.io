@@ -150,7 +150,7 @@ function authView(){
   $('#sw').onclick=()=>{su=!su;draw()};
   $('#ok').onclick=async()=>{const email=$('#em').value.trim(),password=$('#pw').value;
    if(su){const n=$('#n').value.trim();if(!n||!email||password.length<6)return alert('Complétez le nom, l’e-mail et un mot de passe de 6 caractères minimum.');
-    const {data,error}=await SB.auth.signUp({email,password,options:{data:{full_name:n,phone:$('#ph').value.trim(),city:$('#ci').value.trim()}}});
+    const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:'https://troky0201.github.io/Troky/',data:{full_name:n,phone:$('#ph').value.trim(),city:$('#ci').value.trim()}}});
     if(error)return alert(error.message);
     if(data.session){location.hash='/';location.reload()}else{alert('Compte créé. Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous.');su=false;draw()}
    }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error)return alert('E-mail ou mot de passe incorrect.');location.hash='/';location.reload()}}};
