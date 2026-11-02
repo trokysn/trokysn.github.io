@@ -72,6 +72,7 @@ nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#FDF9F4;borde
 .vr{display:grid;grid-template-columns:1.2fr 1fr 1fr 28px;gap:6px;align-items:end;margin-bottom:8px}.vr label{font-size:11px;min-width:0}.vr .in{margin:2px 0 0;padding:9px 8px}.vr .del{background:none;border:0;font-size:20px;color:var(--m);height:40px;cursor:pointer}
 .sold{display:inline-block;background:#EEE3D5;border-radius:8px;padding:1px 8px;font-size:11px;font-weight:700;color:var(--m)}
 .inf .rm{display:block}
+.nt{display:block;padding:12px 14px;border-radius:12px;margin:8px 0;background:#fff;border:1px solid var(--l);width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}.nt.new{background:var(--s);border-color:#E3B97A}.nt b{display:block}.nt small{display:block;margin-top:3px}
 </style></head><body><div id="app"><noscript><h1>Troky : vendre et acheter d’occasion au Sénégal</h1><p>Troky, le site pour vendre et acheter des articles d’occasion au Sénégal : mode, téléphones, maison, beauté. Annonces vérifiées et paiement protégé jusqu’à la réception.</p></noscript></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -99,7 +100,7 @@ const NV=[['/','Accueil'],['/new','Vendre'],['/orders','Commandes'],['/profile']
 const shell=(h,t,opt={})=>{clearInterval(heroT);const lab=r=>r==='/profile'?(S.me?'Profil':'Connexion'):NV.find(x=>x[0]===r)[1];
  A.innerHTML=`${opt.wide?'<div class="promo"><span><b>Paiement protégé</b> jusqu’à la réception</span><span><b>Annonces vérifiées</b> avant publication</span><span><b>Livraison</b> à convenir avec le vendeur</span></div>':''}
  <header class="top"><div class="in-w"><a href="#/" class="logo" data-home>Troky</a><form class="srch" id="sf"><input id="q" type="search" placeholder="Rechercher un article" value="${esc(q)}" aria-label="Rechercher"><button aria-label="Rechercher"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></form>
- <a href="#/new" class="sell-m">Vendre</a><div class="tl"><a href="#/" data-home class="${t==='/'?'on':''}">Accueil</a><a href="#/orders" class="${t==='/orders'?'on':''}">Commandes</a><a href="#/profile" class="${t==='/profile'?'on':''}">${lab('/profile')}</a><a href="#/new" class="sell">Vendre un article</a></div><a href="#/cart" class="cart ${t==='/cart'?'on':''}" aria-label="Panier">${CARTI}<em id="cn0">${cartN()||''}</em></a></div>${opt.bar||''}</header>
+ <a href="#/new" class="sell-m">Vendre</a><div class="tl"><a href="#/" data-home class="${t==='/'?'on':''}">Accueil</a><a href="#/orders" class="${t==='/orders'?'on':''}">Commandes</a><a href="#/profile" class="${t==='/profile'?'on':''}">${lab('/profile')}</a><a href="#/new" class="sell">Vendre un article</a></div>${S.me?`<a href="#/notifs" class="cart ${t==='/notifs'?'on':''}" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2.2 2.2 0 0 0 4 0"/></svg><em id="bn0">${S.unread||''}</em></a>`:''}<a href="#/cart" class="cart ${t==='/cart'?'on':''}" aria-label="Panier">${CARTI}<em id="cn0">${cartN()||''}</em></a></div>${opt.bar||''}</header>
  <div class="w ${opt.wide?'wide':''}">${h}</div><nav>${NV.map(([r])=>`<a href="#${r}" ${r==='/'?'data-home':''} class="${t===r?'on':''}">${lab(r)}</a>`).join('')}</nav>`;
  $('#sf').onsubmit=e=>{e.preventDefault();q=$('#q').value.trim();cat=0;if(['','#','#/'].includes(location.hash))home();else go('/')};
 };
@@ -114,7 +115,7 @@ async function boot(){
 async function route(){
  if(S.rec)return resetView();
  const a=location.hash.slice(1).split('/')[1]||'',b=location.hash.slice(1).split('/')[2];window.scrollTo(0,0);
- try{await ({'':home,l:()=>detail(b),new:newL,cart:cartV,stock:()=>stockV(b),install:installV,g:()=>groupV(b),mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
+ try{await ({'':home,l:()=>detail(b),new:newL,cart:cartV,notifs:notifsV,stock:()=>stockV(b),install:installV,g:()=>groupV(b),mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
  catch(e){shell(`<p class="er">Erreur : ${esc(e.message)}</p>`,'')}
 }
 
@@ -158,10 +159,12 @@ async function home(){
  const bar=`<div class="cbar"><div><button data-cat="0" class="${!cat?'on':''}">Tout</button>${S.cats.map(c=>`<button data-cat="${c.id}" class="${cat===c.id?'on':''}">${esc(c.name)}</button>`).join('')}</div></div>`;
  const top=filt?'':`<div class="hh"><div class="side">${tile('Mode femme')}${tile('Mode homme')}${tile('Maison')}</div><div class="mid">${heroHtml(rec)}</div><div class="side">${tile('Enfants')}${tile('Téléphones et électronique','Électronique')}${tile('Beauté')}</div></div>
  <div class="rnd">${S.cats.map(c=>`<button data-cat="${c.id}"><i>${line(CI[c.name]||CI.Autres)}${pimg(CP[c.name],300)}</i>${esc(c.name)}</button>`).join('')}</div>`;
- shell(`${filt?'':instBanner()}${top}<div class="sect" id="nv"><h2>${q?`Résultats pour « ${esc(q)} »`:cat?esc(cn):'Nouveautés'}</h2>${filt?'<button class="lk2" id="clr">Tout voir</button>':''}</div>
+ shell(`${filt?'':(instBanner()||notifBanner())}${top}<div class="sect" id="nv"><h2>${q?`Résultats pour « ${esc(q)} »`:cat?esc(cn):'Nouveautés'}</h2>${filt?'<button class="lk2" id="clr">Tout voir</button>':''}</div>
  <div class="grid">${data.map(card).join('')||`<p class="mu">${filt?'Aucun article trouvé.':'Aucune annonce pour le moment.'}</p>`}</div>${isApp()?'':'<a class="lk" style="display:block;text-align:center;margin-top:18px" href="#/install">Installer l’application sur mon téléphone</a>'}${filt?'':'<section class="mu" style="margin-top:22px;font-size:13px"><h2 style="font-size:18px;color:var(--t)">Vendez et achetez d’occasion au Sénégal</h2><p>Troky vous permet de donner une seconde vie à vos articles : vêtements, téléphones, objets pour la maison, produits de beauté et plus encore. Chaque annonce est vérifiée avant publication, et votre paiement est protégé jusqu’à la réception de l’article.</p></section>'}`,'/',{wide:true,bar});
  startHero();
  if($('#ii'))$('#ii').onclick=async e=>{if(!IP)return;e.preventDefault();const x=IP;IP=null;x.prompt();const r=await x.userChoice;if(r.outcome==='accepted'){store('troky_inst','1');const b=$('.inst');if(b)b.remove()}};
+ if($('#nb'))$('#nb').onclick=async()=>{if(await enablePush()){await refreshBell();home()}};
+ if($('#nx'))$('#nx').onclick=()=>{store('troky_nb','1');$('.inst').remove()};
  if($('#ix'))$('#ix').onclick=()=>{store('troky_inst','1');$('.inst').remove()};
  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{cat=+b.dataset.cat;home();window.scrollTo(0,0)});
  const go2=document.querySelector('[data-go]');if(go2)go2.onclick=()=>$('#nv').scrollIntoView({behavior:'smooth'});
@@ -197,6 +200,35 @@ async function installV(){
  const steps=isIOS()?['Ouvrez ce site dans <b>Safari</b>.','Touchez le bouton <b>Partager</b> (le carré avec une flèche vers le haut). Si vous ne le voyez pas, touchez d’abord <b>•••</b>.','Faites défiler, puis touchez <b>Sur l’écran d’accueil</b> (parfois sous <b>Plus</b>).','Touchez <b>Ajouter</b> : l’icône Troky apparaît sur votre téléphone.']:['Ouvrez ce site dans <b>Chrome</b>.','Touchez le menu <b>⋮</b> en haut à droite.','Touchez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>.','Confirmez : l’icône Troky apparaît sur votre téléphone.'];
  shell(`<a class="bk" href="#/">← Accueil</a><h2>Installer Troky</h2>${isApp()?'<div class="box">Troky est déjà installée sur cet appareil.</div>':`${IP?'<button class="btn" id="ig">Installer maintenant</button><p class="mu">Si rien ne s’affiche, suivez les étapes ci-dessous.</p>':''}<ol class="stp">${steps.map(x=>`<li>${x}</li>`).join('')}</ol><div class="box">C’est gratuit et rien n’est à télécharger depuis un magasin d’applications.</div>`}`,'');
  if($('#ig'))$('#ig').onclick=async()=>{const e=IP;IP=null;e.prompt();await e.userChoice;installV()};
+}
+async function refreshBell(){if(!S.me)return;const {count,error}=await SB.from('notifications').select('id',{count:'exact',head:true}).eq('read',false);if(error)return;S.unread=count||0;const b=$('#bn0');if(b)b.textContent=S.unread||''}
+const pushOK=()=>'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window;
+const b64k=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(s.length/4)*4,'=')),c=>c.charCodeAt(0));
+async function pushOn(){if(!pushOK()||Notification.permission!=='granted')return false;const r=await navigator.serviceWorker.getRegistration();return !!(r&&await r.pushManager.getSubscription())}
+async function enablePush(){
+ if(!pushOK())return alert(isIOS()&&!isApp()?'Sur iPhone, installez d’abord Troky sur votre écran d’accueil, puis ouvrez-la depuis son icône.':'Ce navigateur ne permet pas les notifications.');
+ if(!S.cfg.vapid_public)return alert('Les notifications seront bientôt disponibles.');
+ const perm=await Notification.requestPermission();if(perm!=='granted')return alert('Notifications refusées. Vous pouvez les autoriser dans les réglages de votre téléphone.');
+ try{await navigator.serviceWorker.register('sw.js');const reg=await navigator.serviceWorker.ready;
+  const sub=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64k(S.cfg.vapid_public)});
+  const j=sub.toJSON(),{error}=await SB.rpc('save_push_subscription',{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth});if(error)throw error;
+  await SB.rpc('send_test_notification');store('troky_nb','1');return true
+ }catch(x){alert('Activation impossible : '+x.message)}
+}
+async function disablePush(){try{const r=await navigator.serviceWorker.getRegistration(),sub=r&&await r.pushManager.getSubscription();if(sub){await SB.rpc('delete_push_subscription',{p_endpoint:sub.endpoint});await sub.unsubscribe()}}catch(x){}}
+function notifBanner(){if(!S.me||read('troky_nb')||!pushOK()||Notification.permission!=='default'||(isIOS()&&!isApp()))return'';return `<div class="inst"><img src="icon-192.png" alt=""><div><b>Activez les notifications</b><br>Suivez vos ventes et vos commandes.</div><button class="btn" id="nb">Activer</button><button class="x" id="nx" aria-label="Fermer">×</button></div>`}
+async function notifsV(){
+ if(need())return;
+ const [{data,error},on]=await Promise.all([SB.from('notifications').select('*').order('created_at',{ascending:false}).limit(50),pushOn()]);if(error)throw error;
+ const fmt=d=>new Date(d).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),un=data.some(n=>!n.read);
+ shell(`<h2>Notifications</h2>
+ ${on?'<div class="box">Les notifications sont activées sur cet appareil. <button class="rm" id="poff" style="display:block;color:var(--g)">Désactiver</button></div>':isIOS()&&!isApp()?'<div class="box">Pour les recevoir sur iPhone, installez d’abord Troky sur votre écran d’accueil.<a class="btn s a" href="#/install" style="line-height:38px">Installer Troky</a></div>':'<div class="box">Recevez aussi les alertes sur cet appareil, même quand Troky est fermée.<button class="btn s" id="pon">Activer les notifications</button></div>'}
+ ${un?'<button class="lk2" id="all" style="padding:4px 0">Tout marquer comme lu</button>':''}
+ ${data.map(n=>`<button class="nt ${n.read?'':'new'}" data-n="${n.id}" data-l="${esc(n.link||'')}"><b>${esc(n.title)}</b>${n.body?esc(n.body):''}<small>${fmt(n.created_at)}</small></button>`).join('')||'<p class="mu">Aucune notification pour le moment.</p>'}`,'/notifs');
+ if($('#pon'))$('#pon').onclick=async()=>{if(await enablePush()){await refreshBell();notifsV()}};
+ if($('#poff'))$('#poff').onclick=async()=>{await disablePush();notifsV()};
+ if($('#all'))$('#all').onclick=async()=>{await SB.from('notifications').update({read:true}).eq('read',false);await refreshBell();notifsV()};
+ document.querySelectorAll('[data-n]').forEach(b=>b.onclick=async()=>{await SB.from('notifications').update({read:true}).eq('id',b.dataset.n);await refreshBell();if(b.dataset.l)go(b.dataset.l);else notifsV()});
 }
 async function cartV(){
  let rows=[],gone=0;
@@ -390,11 +422,11 @@ function profile(){
  <label>Nom<input id="n" class="in" value="${esc(p.full_name)}"></label><label>Téléphone<input id="ph" class="in" value="${esc(p.phone)}"></label><label>Ville<input id="ci" class="in" value="${esc(p.city)}"></label>
  <h3>Pour recevoir vos paiements</h3><label>Opérateur<select id="po">${['Wave','Orange Money','Free Money'].map(o=>`<option ${p.payout_operator===o?'selected':''}>${o}</option>`).join('')}</select></label>
  <label>Numéro<input id="pn" class="in" value="${esc(p.payout_number)}"></label><button class="btn" id="sv">Enregistrer</button>
- <a class="box blk" href="#/mine">Mes annonces</a><a class="box blk" href="#/install">Installer l’application</a>${p.role==='admin'?'<a class="box blk" href="#/admin">Administration</a>':''}<button class="btn o" id="lo">Se déconnecter</button>${p.role==='admin'?'':'<button class="danger" id="del">Supprimer mon compte</button>'}`,'/profile');
+ <a class="box blk" href="#/mine">Mes annonces</a><a class="box blk" href="#/notifs">Notifications</a><a class="box blk" href="#/install">Installer l’application</a>${p.role==='admin'?'<a class="box blk" href="#/admin">Administration</a>':''}<button class="btn o" id="lo">Se déconnecter</button>${p.role==='admin'?'':'<button class="danger" id="del">Supprimer mon compte</button>'}`,'/profile');
  if($('#del'))$('#del').onclick=delAccount;
  $('#sv').onclick=async()=>{const {error}=await SB.from('profiles').update({full_name:$('#n').value.trim(),phone:$('#ph').value.trim()||null,city:$('#ci').value.trim(),payout_operator:$('#po').value,payout_number:$('#pn').value.trim()||null}).eq('id',S.me.id);
   if(error)return alert(error.message);await boot();alert('Profil enregistré.')};
- $('#lo').onclick=async()=>{await SB.auth.signOut();location.hash='/';location.reload()};
+ $('#lo').onclick=async()=>{await disablePush();await SB.auth.signOut();location.hash='/';location.reload()};
 }
 
 async function delAccount(){
@@ -443,7 +475,7 @@ async function admin(){
  ${sec('Reversements à faire',payoutCards(),'Aucun reversement.')}
  ${sec('Litiges',DS.data.map(o=>`<div class="box"><b>${o.ref}</b> · ${esc(o.listings?.title)}${ov(o)?` · ${ov(o)}`:''} · ${F(o.item_price)}<div class="row">${bt('refund',o.id,'Rembourser l’acheteur')}${bt('seller',o.id,'Payer le vendeur',1)}</div></div>`),'Aucun litige.')}
  <h3>Réglages</h3><label>Opérateur de paiement<input id="s_payment_operator" class="in" value="${esc(S.cfg.payment_operator)}"></label><label>Numéro de paiement<input id="s_payment_number" class="in" value="${esc(S.cfg.payment_number)}"></label>
- <label>Nom affiché au client pour le paiement<input id="s_payment_name" class="in" value="${esc(S.cfg.payment_name||'Troky SN')}"></label><label>Lien de paiement Wave Business (facultatif)<input id="s_wave_pay_link" class="in" placeholder="https://..." value="${esc(S.cfg.wave_pay_link)}"></label>
+ <label>Nom affiché au client pour le paiement<input id="s_payment_name" class="in" value="${esc(S.cfg.payment_name||'Troky SN')}"></label><label>Clé publique des notifications<input id="s_vapid_public" class="in" value="${esc(S.cfg.vapid_public)}"></label><label>Lien de paiement Wave Business (facultatif)<input id="s_wave_pay_link" class="in" placeholder="https://..." value="${esc(S.cfg.wave_pay_link)}"></label>
  <label>Commission (0.08 = 8 %)<input id="s_commission_rate" class="in" value="${esc(S.cfg.commission_rate)}"></label><label>Validation automatique (jours)<input id="s_auto_validate_days" class="in" value="${esc(S.cfg.auto_validate_days)}"></label>
  <button class="btn" data-f="cfg">Enregistrer les réglages</button>
  <h3>Images de la bannière d’accueil</h3><div class="ban">${heroList().map((u,i)=>`<div><img src="${esc(u)}" alt=""><button class="btn s o" data-f="hdel" data-id="${i}">Retirer</button></div>`).join('')||'<p class="mu">Aucune image pour le moment.</p>'}</div><label>Ajouter des images<input id="hf" class="in" type="file" accept="image/*" multiple></label><button class="btn o" data-f="auto">Lancer la validation automatique</button>`,'/profile');
@@ -454,7 +486,7 @@ async function admin(){
 const saveCfg=(key,value)=>SB.from('settings').upsert({key,value});
 A.onclick=async e=>{
  const b=e.target.closest('[data-f]');if(!b)return;const f=b.dataset.f,id=b.dataset.id;let n,a={};
- if(f==='cfg'){for(const k of['payment_operator','payment_number','payment_name','wave_pay_link','commission_rate','auto_validate_days']){const {error}=await saveCfg(k,$('#s_'+k).value.trim());if(error)return alert(error.message)}await boot();alert('Réglages enregistrés.');return admin()}
+ if(f==='cfg'){for(const k of['payment_operator','payment_number','payment_name','vapid_public','wave_pay_link','commission_rate','auto_validate_days']){const {error}=await saveCfg(k,$('#s_'+k).value.trim());if(error)return alert(error.message)}await boot();alert('Réglages enregistrés.');return admin()}
  if(f==='payall'){const r=prompt('Vous confirmez avoir versé '+F(b.dataset.amt)+' à ce vendeur ?\nRéférence du transfert (facultatif)');if(r===null)return;const {data:ps,error:e0}=await SB.from('payouts').select('id').eq('seller_id',id).eq('status','a_faire');if(e0)return alert(e0.message);for(const x of ps){const {error}=await SB.rpc('admin_complete_payout',{p_payout:x.id,p_ref:r||null});if(error){alert(error.message);break}}return admin()}
  if(f==='hdel'){const a=heroList(),[u]=a.splice(+id,1),{error}=await saveCfg('hero_images',JSON.stringify(a));if(error)return alert(error.message);const m=String(u).split('/listing-photos/')[1];if(m)await SB.storage.from('listing-photos').remove([decodeURIComponent(m)]);await boot();return admin()}
  if(f==='ok'){n='admin_review_listing';a={p_listing:id,p_approve:true}}
@@ -469,7 +501,9 @@ A.onclick=async e=>{
  const {data,error}=await SB.rpc(n,a);if(error)return alert(error.message);if(f==='auto')alert(data+' commande(s) validée(s).');admin();
 };
 addEventListener('hashchange',route);
-boot().then(()=>{S.ready=true;
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+setInterval(()=>{if(!document.hidden)refreshBell()},60000);
+boot().then(()=>{S.ready=true;refreshBell();
  if(HASH0.includes('otp_expired')){alert('Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.');history.replaceState(null,'',location.pathname+'#/profile')}
  route()});
 </script></body></html>
