@@ -121,7 +121,8 @@ const shell=(h,t,opt={})=>{clearInterval(heroT);clearInterval(chatT);const lab=r
  eyes();
  $('#sf').onsubmit=e=>{e.preventDefault();q=$('#q').value.trim();cat=0;if(['','#','#/'].includes(location.hash))home();else go('/')};
 };
-const need=()=>{if(!S.me){go('/profile');return true}};
+const goLogin=()=>{try{localStorage.setItem('troky_after',location.hash)}catch(e){}go('/profile')};
+const need=()=>{if(!S.me){goLogin();return true}};
 
 async function boot(){
  const {data:{session}}=await SB.auth.getSession();S.me=session?.user||null;S.p=null;S.favs=new Set();
@@ -134,8 +135,9 @@ const fromP=()=>LAST==='#/profile',backP=()=>S.me?'<a class="bk" href="#/profile
 async function route(){
  if(location.hash!==CUR){LAST=CUR;CUR=location.hash}
  if(S.rec)return resetView();
+ if(S.me)showPub();
  const a=location.hash.slice(1).split('/')[1]||'',b=location.hash.slice(1).split('/')[2];window.scrollTo(0,0);
- try{await ({'':home,l:()=>detail(b),new:newL,cart:cartV,notifs:notifsV,msgs:msgsV,c:()=>chatV(b),favs:favsV,edit:()=>editV(b),conditions:condV,contact:contactV,stock:()=>stockV(b),install:installV,g:()=>groupV(b),mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
+ try{await ({'':home,l:()=>detail(b),new:newL,cart:cartV,v:()=>shopV(b),pc:()=>pcV(b),notifs:notifsV,msgs:msgsV,c:()=>chatV(b),favs:favsV,edit:()=>editV(b),conditions:condV,contact:contactV,stock:()=>stockV(b),install:installV,g:()=>groupV(b),mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
  catch(e){shell(`<p class="er">Erreur : ${esc(e.message)}</p>`,'')}
 }
 
@@ -200,19 +202,19 @@ async function detail(id){
  <h2>${esc(l.title)}</h2><div class="pr big" id="dp">${st&&sel?F(sel.price):priceTxt(l)}</div><p class="mu">${[CO[l.condition],l.size_label&&'Taille : '+esc(l.size_label),esc(l.city)].filter(Boolean).join(' · ')}</p><p>${esc(l.description)}</p>
  ${st?`<label>Choisir la taille</label><div class="szs">${vs.map(v=>`<button class="sz ${sel&&v.id===sel.id?'on':''}" data-v="${v.id}" ${v.stock===0?'disabled':''}>${esc(v.label)}<small>${F(v.price)}${v.stock===0?' · Épuisé':v.stock!==null&&v.stock<=5?` · Reste ${v.stock}`:''}</small></button>`).join('')}</div>
  ${can?'<label>Quantité</label><div class="qty"><button id="qm" aria-label="Moins">−</button><b id="qv">1</b><button id="qp" aria-label="Plus">+</button></div>':''}`:''}
- <div class="box" style="display:flex;align-items:center;gap:12px">${avatar(s?.avatar_url,s?.full_name||'V')}<div><b>${esc(s?.full_name||'Vendeur')}</b><br><small>${s?.rating_avg||0} sur 5 · ${s?.sales_count||0} ventes</small></div></div>
+ <a class="box" href="#/v/${l.seller_id}" style="display:flex;align-items:center;gap:12px">${avatar(s?.avatar_url,s?.full_name||'V')}<div><b>${esc(s?.full_name||'Vendeur')}</b><br><small>${s?.rating_avg||0} sur 5 · ${s?.sales_count||0} ventes · Voir la boutique</small></div></a>
  ${(rv||[]).length?`<h3>Avis sur le vendeur</h3>${rv.map(r=>`<div class="lin" style="display:block"><span class="star">${'★'.repeat(r.rating)}</span>${r.comment?` ${esc(r.comment)}`:''}</div>`).join('')}`:''}
  <p class="mu">Paiement protégé jusqu’à la réception de l’article. La livraison est payée par l’acheteur : son prix dépend de la distance et se décide avec le vendeur dans la messagerie.</p>
  ${own?'':`<button class="btn o" id="ctv">Contacter le vendeur</button><button class="btn o" id="fvd" data-fav="${l.id}">${S.favs.has(l.id)?'Retirer des favoris':'Ajouter aux favoris'}</button>`}
  ${l.status!=='publiee'?`<span class="tag">${ST[l.status]}</span>`:own?(st?`<a class="btn o a" href="#/stock/${l.id}">Gérer le stock</a>`:''):!can?'<span class="sold">Épuisé</span>':`<button class="btn" id="buy">Acheter maintenant</button><button class="btn o" id="tc">Ajouter au panier</button>`}`,'/');
- if($('#ctv'))$('#ctv').onclick=async()=>{if(!S.me)return go('/profile');const {data,error:e}=await SB.rpc('start_conversation',{p_listing:id});if(e)return alert(e.message);go('/c/'+data)};
+ if($('#ctv'))$('#ctv').onclick=async()=>{if(!S.me)return goLogin();const {data,error:e}=await SB.rpc('start_conversation',{p_listing:id});if(e)return alert(e.message);go('/c/'+data)};
  if($('#fvd')){const b=$('#fvd');b.addEventListener('click',()=>setTimeout(()=>{b.textContent=S.favs.has(id)?'Retirer des favoris':'Ajouter aux favoris'}))}
  const lim=()=>sel&&sel.stock!==null?Math.min(sel.stock,99):99;
  const up=()=>{if(sel)$('#dp').textContent=F(sel.price*qty);if($('#qv'))$('#qv').textContent=qty;const t=$('#tc');if(t)t.textContent=inCart(id,sel?.id)?'Voir mon panier':'Ajouter au panier'};
  document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{sel=vs.find(v=>v.id===b.dataset.v);qty=Math.min(qty,lim());document.querySelectorAll('[data-v]').forEach(x=>x.classList.toggle('on',x===b));up()});
  if($('#qm'))$('#qm').onclick=()=>{if(qty>1){qty--;up()}};if($('#qp'))$('#qp').onclick=()=>{if(qty<lim()){qty++;up()}};up();
  if($('#tc'))$('#tc').onclick=()=>{if(inCart(id,sel?.id))return go('/cart');CART.push({l:id,v:sel?.id||null,q:qty});saveCart();up()};
- const b=$('#buy');if(b)b.onclick=async()=>{if(!S.me)return go('/profile');b.disabled=true;
+ const b=$('#buy');if(b)b.onclick=async()=>{if(!S.me)return goLogin();b.disabled=true;
   const {data,error}=await SB.rpc('create_order_v2',{p_listing:id,p_variant:sel?.id||null,p_qty:qty});if(error){alert(error.message);b.disabled=false;return detail(id)}CART=CART.filter(x=>!(x.l===id&&(x.v||null)===(sel?.id||null)));saveCart();go('/o/'+data.id)};
 }
 
@@ -266,6 +268,22 @@ function showPub(){
   b.append(i,x);w.append(b);document.body.append(w);x.focus()};
  i.src='pub-troky-v2.jpg';
 }
+const encCart=c=>btoa(JSON.stringify(c.map(x=>[x.l,x.v||0,x.q||1]))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const pcUrl=c=>'https://trokysn.github.io/#/pc/'+encCart(c);
+const decCart=t=>{try{const a=JSON.parse(atob(String(t).replace(/-/g,'+').replace(/_/g,'/')));const id=/^[0-9a-zA-Z-]{1,40}$/;return Array.isArray(a)?a.slice(0,20).filter(x=>Array.isArray(x)&&id.test(x[0])).map(x=>({l:x[0],v:id.test(x[1])?x[1]:null,q:Math.min(Math.max(parseInt(x[2])||1,1),99)})):[]}catch(e){return[]}};
+async function pcV(t){
+ const it=decCart(t);let rows=[];
+ if(it.length){const {data,error}=await SB.from('listings').select('*,listing_photos(url,position),listing_variants(*)').in('id',[...new Set(it.map(x=>x.l))]).eq('status','publiee');if(error)throw error;
+  for(const c of it){const l=(data||[]).find(x=>x.id===c.l);if(!l||(S.me&&S.me.id===l.seller_id))continue;
+   if(isStock(l)){const v=vars(l).find(x=>x.id===c.v);if(!v||v.stock===0)continue;const q=v.stock===null?c.q:Math.min(c.q,v.stock);rows.push({l,v,q,unit:v.price})}else rows.push({l,v:null,q:1,unit:l.price})}}
+ const tot=rows.reduce((a,r)=>a+r.unit*r.q,0);
+ shell(`<a class="bk" href="#/">← Accueil</a><h2>Panier partagé</h2><p class="mu">Quelqu’un vous demande de valider ce panier. Vérifiez les articles et le prix avant de payer.</p>
+ ${rows.map(r=>`<div class="row2 ci"><a href="#/l/${r.l.id}" class="th">${ph(r.l)}</a><div class="inf"><b>${esc(r.l.title)}</b>${r.v||r.l.size_label?`<br><small>Taille : ${esc(r.v?.label||r.l.size_label)}</small>`:''}<br><span class="pr">${F(r.unit*r.q)}</span>${r.q>1?` <small>(${r.q} × ${F(r.unit)})</small>`:''}</div></div>`).join('')||'<p class="mu">Ce panier n’est plus disponible.</p>'}
+ ${rows.length?`<div class="box"><div class="tot"><span>Total</span><span>${F(tot)}</span></div></div>${it.length>rows.length?'<p class="mu">Certains articles ne sont plus disponibles.</p>':''}<p class="mu">La commande sera à votre nom. La livraison se décide ensuite avec le vendeur dans la messagerie.</p><button class="btn" id="vld">${S.me?'Valider et payer':'Créer un compte ou se connecter pour valider'}</button>`:''}`,'/cart');
+ if($('#vld'))$('#vld').onclick=async e=>{if(!S.me)return goLogin();if(!confirm('Valider ce panier de '+F(tot)+' à votre nom ?'))return;e.target.disabled=true;
+  if(rows.length===1){const r=rows[0],{data,error}=await SB.rpc('create_order_v2',{p_listing:r.l.id,p_variant:r.v?.id||null,p_qty:r.q});if(error){alert(error.message);return pcV(t)}return go('/o/'+data.id)}
+  const {data,error}=await SB.rpc('create_group_order_v2',{p_items:rows.map(r=>({listing:r.l.id,variant:r.v?.id||null,qty:r.q}))});if(error){alert('Commande impossible : '+error.message);return pcV(t)}go('/g/'+data.id)};
+}
 async function cartV(){
  let rows=[],gone=0;
  if(CART.length){const {data,error}=await SB.from('listings').select('*,listing_photos(url,position),listing_variants(*)').in('id',[...new Set(CART.map(x=>x.l))]).eq('status','publiee');if(error)throw error;
@@ -277,10 +295,11 @@ async function cartV(){
  shell(`<h2>Mon panier</h2>${gone?`<div class="box">${gone} article${gone>1?'s ne sont':' n’est'} plus disponible${gone>1?'s':''} et ${gone>1?'ont été retirés':'a été retiré'}.</div>`:''}
  ${rows.map((r,i)=>`<div class="row2 ci"><a href="#/l/${r.l.id}" class="th">${ph(r.l)}</a><div class="inf"><b>${esc(r.l.title)}</b>${r.v||r.l.size_label?`<br><small>Taille : ${esc(r.v?.label||r.l.size_label)}</small>`:''}<br><span class="pr">${F(r.unit*r.q)}</span>${r.q>1?` <small>(${r.q} × ${F(r.unit)})</small>`:''}
  ${r.v?`<div class="qty"><button data-dq="${i}" data-d="-1" aria-label="Moins">−</button><b>${r.q}</b><button data-dq="${i}" data-d="1" aria-label="Plus">+</button></div>`:''}<button class="rm" data-rm="${i}">Retirer</button></div></div>`).join('')||'<p class="mu">Votre panier est vide.</p><a class="btn a" href="#/" data-home>Voir les articles</a>'}
- ${rows.length?`<div class="box"><div class="tot"><span>Total</span><span>${F(tot)}</span></div></div>${rows.length>1?'<p class="mu">Vous payez le total en une seule fois. Chaque vendeur prépare ensuite son article.</p>':''}<button class="btn" id="chk">Commander</button>`:''}`,'/cart');
+ ${rows.length?`<div class="box"><div class="tot"><span>Total</span><span>${F(tot)}</span></div></div>${rows.length>1?'<p class="mu">Vous payez le total en une seule fois. Chaque vendeur prépare ensuite son article.</p>':''}<button class="btn" id="chk">Commander</button><button class="btn o" id="spc">Partager mon panier</button><a class="btn o a" id="spw" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Peux-tu valider mon panier sur Troky ? '+pcUrl(rows.map(r=>r.c)))}">Envoyer mon panier sur WhatsApp</a>`:''}`,'/cart');
+ if($('#spc'))$('#spc').onclick=async e=>{const url=pcUrl(rows.map(r=>r.c));if(navigator.share){try{await navigator.share({title:'Mon panier Troky',text:'Peux-tu valider mon panier sur Troky ?',url});return}catch(x){if(x.name==='AbortError')return}}copyTo(e.target,url)};
  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{CART.splice(+b.dataset.rm,1);saveCart();cartV()});
  document.querySelectorAll('[data-dq]').forEach(b=>b.onclick=()=>{const r=rows[+b.dataset.dq],max=r.v.stock===null?99:Math.min(r.v.stock,99),n=r.q+(+b.dataset.d);if(n<1||n>max)return;CART[+b.dataset.dq].q=n;saveCart();cartV()});
- if($('#chk'))$('#chk').onclick=async e=>{if(!S.me)return go('/profile');e.target.disabled=true;e.target.textContent='Création…';
+ if($('#chk'))$('#chk').onclick=async e=>{if(!S.me)return goLogin();e.target.disabled=true;e.target.textContent='Création…';
   if(rows.length===1){const r=rows[0],{data,error}=await SB.rpc('create_order_v2',{p_listing:r.l.id,p_variant:r.v?.id||null,p_qty:r.q});if(error){alert(error.message);return cartV()}CART=[];saveCart();return go('/o/'+data.id)}
   const {data,error}=await SB.rpc('create_group_order_v2',{p_items:rows.map(r=>({listing:r.l.id,variant:r.v?.id||null,qty:r.q}))});
   if(error){alert('Commande impossible : '+error.message);return cartV()}
@@ -302,7 +321,7 @@ async function groupV(id){
  if($('#ca'))$('#ca').onclick=e=>copyTo(e.target,String(tot));
  if($('#pd'))$('#pd').onclick=async()=>{const rf=$('#rf').value.trim();if(!rf)return alert('Indiquez la référence de la transaction.');const {error:e}=await SB.rpc('buyer_declare_group_paid',{p_group:id,p_operator:$('#op').value,p_reference:rf});if(e)alert(e.message);groupV(id)};
 }
-const toggleFav=async(id,b)=>{if(!S.me)return go('/profile');if(S.favs.has(id)){S.favs.delete(id);b.classList.remove('on');await SB.from('favorites').delete().eq('listing_id',id).eq('user_id',S.me.id)}else{S.favs.add(id);b.classList.add('on');await SB.from('favorites').insert({user_id:S.me.id,listing_id:id})}};
+const toggleFav=async(id,b)=>{if(!S.me)return goLogin();if(S.favs.has(id)){S.favs.delete(id);b.classList.remove('on');await SB.from('favorites').delete().eq('listing_id',id).eq('user_id',S.me.id)}else{S.favs.add(id);b.classList.add('on');await SB.from('favorites').insert({user_id:S.me.id,listing_id:id})}};
 A.addEventListener('click',e=>{
  const fv=e.target.closest('[data-fav]');if(fv){e.preventDefault();toggleFav(fv.dataset.fav,fv);return}
  const a=e.target.closest('[data-add]');
@@ -401,6 +420,19 @@ async function stockV(id){
 }
 
 A.addEventListener('click',async e=>{const b=e.target.closest('[data-wd]');if(!b)return;if(!confirm('Retirer cette annonce de la vente ?'))return;const {error}=await SB.from('listings').update({status:'supprimee'}).eq('id',b.dataset.wd);if(error)return alert(error.message);mine()});
+async function shopV(id){
+ const [{data:s},{data:ls,error}]=await Promise.all([SB.from('public_profiles').select('*').eq('id',id).maybeSingle(),SB.from('listings').select('*,listing_photos(url,position),listing_variants(price,stock,position)').eq('seller_id',id).eq('status','publiee').order('created_at',{ascending:false}).limit(100)]);if(error)throw error;
+ if(!s)return shell('<a class="bk" href="#/">← Accueil</a><h2>Boutique introuvable</h2><p class="mu">Ce lien ne correspond à aucune boutique.</p>','');
+ const own=S.me&&S.me.id===id,url='https://trokysn.github.io/#/v/'+id,msg=`Découvrez mes articles sur Troky : ${url}`;
+ shell(`<a class="bk" href="#${own?'/profile':'/'}">← ${own?'Profil':'Accueil'}</a>
+ <div class="avr">${avatar(s.avatar_url,s.full_name,true)}<div><h2 style="margin:0">${esc(s.full_name)}</h2><small>${esc(s.city||'')}${s.city?' · ':''}${s.rating_avg||0} sur 5 · ${s.sales_count||0} ventes</small></div></div>
+ ${own?`<div class="box"><b>Votre lien de boutique</b><br><small style="overflow-wrap:anywhere">${esc(url)}</small><div class="row"><button class="btn s" id="shs">Partager</button><button class="btn s o" id="shc">Copier le lien</button></div><a class="btn s o a" style="line-height:36px" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Envoyer sur WhatsApp</a></div>`:''}
+ ${S.me?'':'<div class="box">Tout le monde peut voir ces articles. Pour acheter, créez un compte ou connectez-vous.<a class="btn s a" href="#/profile" style="line-height:36px" id="shl">Créer un compte</a></div>'}
+ <h3>Articles en vente (${ls.length})</h3><div class="grid">${ls.map(card).join('')||'<p class="mu">Aucun article en vente pour le moment.</p>'}</div>`,own?'/profile':'',{wide:false});
+ if($('#shl'))$('#shl').onclick=()=>store('troky_after',location.hash);
+ if($('#shc'))$('#shc').onclick=e=>copyTo(e.target,url);
+ if($('#shs'))$('#shs').onclick=async e=>{if(navigator.share){try{await navigator.share({title:'Ma boutique Troky',text:'Découvrez mes articles sur Troky',url})}catch(x){}}else copyTo(e.target,url)};
+}
 async function favsV(){
  if(need())return;const ids=[...S.favs];let data=[];if(ids.length){const r=await SB.from('listings').select('*,listing_photos(url,position),listing_variants(price,stock,position)').in('id',ids).eq('status','publiee');data=r.data||[]}
  shell(`<a class="bk" href="#/profile">← Profil</a><h2>Mes favoris</h2><div class="grid">${data.map(card).join('')||'<p class="mu">Aucun favori pour le moment.</p>'}</div>`,'/profile');
@@ -531,8 +563,8 @@ function authView(){
    if(su){const n=$('#n').value.trim();if(!pwOk(password)){pwShow(true);$('#pw').focus();return}if(!n||!email)return alert('Complétez le nom et l’e-mail.');if(!$('#cg').checked)return alert('Veuillez accepter les conditions d’utilisation.');
     const {data,error}=await SB.auth.signUp({email,password,options:{emailRedirectTo:'https://trokysn.github.io/',data:{full_name:n,phone:$('#ph').value.trim(),city:$('#ci').value.trim()}}});
     if(error)return alert(/password/i.test(error.message)?'Le mot de passe doit contenir au moins 6 caractères.':error.message);
-    if(data.session){store('troky_pub_show','1');location.hash='/';location.reload()}else{alert('Compte créé. Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous.\n\nVérifiez vos e-mails et vos spams.');su=false;draw()}
-   }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error)return alert('E-mail ou mot de passe incorrect.');store('troky_pub_show','1');location.hash='/';location.reload()}}};
+    if(data.session){store('troky_pub_show','1');{const af=read('troky_after');store('troky_after','');location.hash=af&&af.startsWith('#/')&&af!=='#/profile'?af:'/'};location.reload()}else{alert('Compte créé. Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous.\n\nVérifiez vos e-mails et vos spams.');su=false;draw()}
+   }else{const {error}=await SB.auth.signInWithPassword({email,password});if(error)return alert('E-mail ou mot de passe incorrect.');store('troky_pub_show','1');{const af=read('troky_after');store('troky_after','');location.hash=af&&af.startsWith('#/')&&af!=='#/profile'?af:'/'};location.reload()}}};
  draw();
 }
 function profile(){
@@ -541,7 +573,7 @@ function profile(){
  <label>Nom<input id="n" class="in" value="${esc(p.full_name)}"></label><label>Téléphone<input id="ph" class="in" value="${esc(p.phone)}"></label><label>Ville<input id="ci" class="in" value="${esc(p.city)}"></label>
  <h3>Pour recevoir vos paiements</h3><label>Opérateur<select id="po">${['Wave','Orange Money','Free Money'].map(o=>`<option ${p.payout_operator===o?'selected':''}>${o}</option>`).join('')}</select></label>
  <label>Numéro<input id="pn" class="in" value="${esc(p.payout_number)}"></label><button class="btn" id="sv">Enregistrer</button>
- <a class="box blk" href="#/mine">Mes annonces</a><a class="box blk" href="#/msgs">Mes messages</a><a class="box blk" href="#/favs">Mes favoris</a><a class="box blk" href="#/notifs">Notifications</a><a class="box blk" href="#/contact">Contact</a><a class="box blk" href="#/conditions">Conditions d’utilisation</a><a class="box blk" href="#/install">Installer l’application</a>${p.role==='admin'?'<a class="box blk" href="#/admin">Administration</a>':''}<button class="btn o" id="lo">Se déconnecter</button>${p.role==='admin'?'':'<button class="danger" id="del">Supprimer mon compte</button>'}`,'/profile');
+ <a class="box blk" href="#/mine">Mes annonces</a><a class="box blk" href="#/v/${S.me.id}">Ma boutique et mon lien à partager</a><a class="box blk" href="#/msgs">Mes messages</a><a class="box blk" href="#/favs">Mes favoris</a><a class="box blk" href="#/notifs">Notifications</a><a class="box blk" href="#/contact">Contact</a><a class="box blk" href="#/conditions">Conditions d’utilisation</a><a class="box blk" href="#/install">Installer l’application</a>${p.role==='admin'?'<a class="box blk" href="#/admin">Administration</a>':''}<button class="btn o" id="lo">Se déconnecter</button>${p.role==='admin'?'':'<button class="danger" id="del">Supprimer mon compte</button>'}`,'/profile');
  if($('#del'))$('#del').onclick=delAccount;
  $('#avf').onchange=async e=>{const f=e.target.files[0];if(!f)return;const lb=e.target.parentNode;lb.firstChild.textContent='Envoi…';
   try{const bm=await createImageBitmap(f),m=Math.min(bm.width,bm.height),c=document.createElement('canvas');c.width=c.height=400;c.getContext('2d').drawImage(bm,(bm.width-m)/2,(bm.height-m)/2,m,m,0,0,400,400);const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.85));
