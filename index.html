@@ -155,11 +155,13 @@ function heroHtml(rec){
  const pk=wp.slice(0,2).map(l=>`<a href="#/l/${l.id}"><img src="${esc(pics(l)[0].url)}" alt=""><span>${F(l.price)}</span></a>`).join('');
  const photo=(id,h,p,btn)=>`<div class="sl main bg"><img src="${UP(id,1100)}" alt="" onerror="this.remove()"><span class="ov"></span><h1>${h}</h1><p>${p}</p>${btn}</div>`;
  const imgs=heroList().map(u=>`<div class="sl ph"><img src="${esc(u)}" alt=""></div>`);
- const items=wp.slice(0,5).map(l=>`<a class="sl ph" href="#/l/${l.id}"><img src="${esc(pics(l)[0].url)}" alt=""><span class="cap"><b>${esc(l.title)}</b>${F(l.price)}</span></a>`);
+ const pick=wp.slice(0,30).map(l=>[Math.random(),l]).sort((x,y)=>x[0]-y[0]).slice(0,2).map(x=>x[1]);
+ const items=pick.map(l=>`<a class="sl ph" href="#/l/${l.id}"><img src="${esc(pics(l)[0].url)}" alt=""><span class="cap"><b>${esc(l.title)}</b>${F(l.price)}</span></a>`);
  const all=[`<div class="sl main bg ${pk?'hp':''}"><img src="${UP('1540221652346-e5dd6b50f3e7',1100)}" alt="" onerror="this.remove()"><span class="ov"></span><h1>Troky, donnez une seconde vie à vos articles.</h1><p>Vendez, achetez, redonnez vie.</p><button class="cta" data-go="nv">Voir les articles</button>${pk?`<div class="picks">${pk}</div>`:''}</div>`,
   photo('1709809081557-78f803ce93a0','Des pièces qui ont du style','Trouvez votre prochain coup de cœur.',fem?`<button class="cta" data-cat="${fem.id}">Voir la mode femme</button>`:''),
-  ...imgs,...items,
+  ...items.slice(0,1),...imgs,
   photo('1709916314093-5bbc88f6ee8c','Vendez ce que vous ne portez plus','Quelques photos, et votre annonce est prête.','<a class="cta" href="#/new">Vendre un article</a>'),
+  ...items.slice(1,2),
   photo('1618221195710-dd6b41faaea6','Paiement protégé','Jusqu’à la réception de votre article.','')];
  return `<div class="hero"><button class="arr l" id="hp" aria-label="Précédent">‹</button><div class="slides" id="sli">${all.join('')}</div><button class="arr r" id="hn" aria-label="Suivant">›</button><div class="dots" id="dts">${all.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div></div>`;
 }
@@ -289,12 +291,15 @@ async function usersV(){
  const {data,error}=await SB.rpc('admin_list_users');
  if(error)return shell(`<a class="bk" href="#/admin">← Administration</a><h2>Inscrits</h2><div class="box">Liste indisponible : exécutez d’abord la mise à jour de la base (troky_maj_emails.sql).<br><small>${esc(error.message)}</small></div>`,'/admin');
  const d=x=>x?new Date(x).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'',ok=data.filter(u=>u.confirmed_at),ko=data.filter(u=>!u.confirmed_at);
- const row=(u,c)=>`<div class="box"><b>${esc(u.full_name)}</b><br><small>${esc(u.email)}${u.phone?' · '+esc(u.phone):''}${u.city?' · '+esc(u.city):''}</small><br><small>Inscrit le ${d(u.created_at)}${c?` · confirmé le ${d(u.confirmed_at)}`:''}${u.last_sign_in_at?` · dernière connexion le ${d(u.last_sign_in_at)}`:''}</small></div>`;
+ const old=ko.filter(u=>Date.now()-new Date(u.created_at)>3*864e5);
+ const row=(u,c)=>`<div class="box"><b>${esc(u.full_name)}</b><br><small>${esc(u.email)}${u.phone?' · '+esc(u.phone):''}${u.city?' · '+esc(u.city):''}</small><br><small>Inscrit le ${d(u.created_at)}${c?` · confirmé le ${d(u.confirmed_at)}`:''}${u.last_sign_in_at?` · dernière connexion le ${d(u.last_sign_in_at)}`:''}</small>${c?'':`<button class="danger" style="width:auto;padding:8px 0 0;margin:0" data-du="${u.id}" data-em="${esc(u.email)}">Supprimer ce compte</button>`}</div>`;
  shell(`<a class="bk" href="#/admin">← Administration</a><h2>Inscrits (${data.length})</h2>
  <div class="row"><div class="stat" style="flex:1"><b>${ok.length}</b>e-mails confirmés</div><div class="stat" style="flex:1;background:#B8693F"><b>${ko.length}</b>non confirmés</div></div>
- <h3>E-mails non confirmés (${ko.length})</h3>${ko.length?'<p class="mu"><small>Ces personnes n’ont pas encore cliqué sur le lien reçu par e-mail. Pensez à leur dire de vérifier leurs spams.</small></p>':''}${ko.map(u=>row(u,0)).join('')||'<p class="mu">Aucun.</p>'}
+ <h3>E-mails non confirmés (${ko.length})</h3>${ko.length?'<p class="mu"><small>Ces personnes n’ont pas encore cliqué sur le lien reçu par e-mail. Pensez à leur dire de vérifier leurs spams.</small></p>':''}${old.length?`<button class="btn s o" id="dall">Supprimer les ${old.length} non confirmé${old.length>1?'s':''} depuis plus de 3 jours</button>`:''}${ko.map(u=>row(u,0)).join('')||'<p class="mu">Aucun.</p>'}
  <h3>E-mails confirmés (${ok.length})</h3>${ok.map(u=>row(u,1)).join('')||'<p class="mu">Aucun.</p>'}`,'/admin');
 }
+A.addEventListener('click',async e=>{const b=e.target.closest('[data-du]');if(!b)return;if(!confirm('Supprimer définitivement le compte non confirmé '+b.dataset.em+' ?'))return;b.disabled=true;const {error}=await SB.rpc('admin_delete_unconfirmed',{p_user:b.dataset.du});if(error){b.disabled=false;return alert(error.message)}usersV()});
+A.addEventListener('click',async e=>{if(!e.target.closest('#dall'))return;const {data}=await SB.rpc('admin_list_users');const ids=(data||[]).filter(u=>!u.confirmed_at&&Date.now()-new Date(u.created_at)>3*864e5);if(!ids.length)return usersV();if(!confirm('Supprimer définitivement '+ids.length+' compte(s) non confirmé(s) depuis plus de 3 jours ?'))return;let ok=0,ko=0;for(const u of ids){const {error}=await SB.rpc('admin_delete_unconfirmed',{p_user:u.id});error?ko++:ok++}alert(ok+' compte(s) supprimé(s)'+(ko?', '+ko+' ignoré(s) car déjà actifs':'')+'.');usersV()});
 async function cartV(){
  let rows=[],gone=0;
  if(CART.length){const {data,error}=await SB.from('listings').select('*,listing_photos(url,position),listing_variants(*)').in('id',[...new Set(CART.map(x=>x.l))]).eq('status','publiee');if(error)throw error;
