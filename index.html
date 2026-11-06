@@ -137,7 +137,7 @@ async function route(){
  if(S.rec)return resetView();
  if(S.me)showPub();
  const a=location.hash.slice(1).split('/')[1]||'',b=location.hash.slice(1).split('/')[2];window.scrollTo(0,0);
- try{await ({'':home,l:()=>detail(b),new:newL,cart:cartV,v:()=>shopV(b),pc:()=>pcV(b),notifs:notifsV,msgs:msgsV,c:()=>chatV(b),favs:favsV,edit:()=>editV(b),conditions:condV,contact:contactV,stock:()=>stockV(b),install:installV,g:()=>groupV(b),mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
+ try{await ({'':home,l:()=>detail(b),new:newL,cart:cartV,inscrits:usersV,v:()=>shopV(b),pc:()=>pcV(b),notifs:notifsV,msgs:msgsV,c:()=>chatV(b),favs:favsV,edit:()=>editV(b),conditions:condV,contact:contactV,stock:()=>stockV(b),install:installV,g:()=>groupV(b),mine,orders,o:()=>order(b),profile,admin}[a]||home)()}
  catch(e){shell(`<p class="er">Erreur : ${esc(e.message)}</p>`,'')}
 }
 
@@ -283,6 +283,17 @@ async function pcV(t){
  if($('#vld'))$('#vld').onclick=async e=>{if(!S.me)return goLogin();if(!confirm('Valider ce panier de '+F(tot)+' à votre nom ?'))return;e.target.disabled=true;
   if(rows.length===1){const r=rows[0],{data,error}=await SB.rpc('create_order_v2',{p_listing:r.l.id,p_variant:r.v?.id||null,p_qty:r.q});if(error){alert(error.message);return pcV(t)}return go('/o/'+data.id)}
   const {data,error}=await SB.rpc('create_group_order_v2',{p_items:rows.map(r=>({listing:r.l.id,variant:r.v?.id||null,qty:r.q}))});if(error){alert('Commande impossible : '+error.message);return pcV(t)}go('/g/'+data.id)};
+}
+async function usersV(){
+ if(!S.p||S.p.role!=='admin')return go('/');
+ const {data,error}=await SB.rpc('admin_list_users');
+ if(error)return shell(`<a class="bk" href="#/admin">← Administration</a><h2>Inscrits</h2><div class="box">Liste indisponible : exécutez d’abord la mise à jour de la base (troky_maj_emails.sql).<br><small>${esc(error.message)}</small></div>`,'/admin');
+ const d=x=>x?new Date(x).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'',ok=data.filter(u=>u.confirmed_at),ko=data.filter(u=>!u.confirmed_at);
+ const row=(u,c)=>`<div class="box"><b>${esc(u.full_name)}</b><br><small>${esc(u.email)}${u.phone?' · '+esc(u.phone):''}${u.city?' · '+esc(u.city):''}</small><br><small>Inscrit le ${d(u.created_at)}${c?` · confirmé le ${d(u.confirmed_at)}`:''}${u.last_sign_in_at?` · dernière connexion le ${d(u.last_sign_in_at)}`:''}</small></div>`;
+ shell(`<a class="bk" href="#/admin">← Administration</a><h2>Inscrits (${data.length})</h2>
+ <div class="row"><div class="stat" style="flex:1"><b>${ok.length}</b>e-mails confirmés</div><div class="stat" style="flex:1;background:#B8693F"><b>${ko.length}</b>non confirmés</div></div>
+ <h3>E-mails non confirmés (${ko.length})</h3>${ko.length?'<p class="mu"><small>Ces personnes n’ont pas encore cliqué sur le lien reçu par e-mail. Pensez à leur dire de vérifier leurs spams.</small></p>':''}${ko.map(u=>row(u,0)).join('')||'<p class="mu">Aucun.</p>'}
+ <h3>E-mails confirmés (${ok.length})</h3>${ok.map(u=>row(u,1)).join('')||'<p class="mu">Aucun.</p>'}`,'/admin');
 }
 async function cartV(){
  let rows=[],gone=0;
@@ -626,7 +637,7 @@ async function admin(){
  const nm=id=>esc((PR.data.find(p=>p.id===id)||{}).full_name||'?'),pm=id=>(PM.data||[]).filter(p=>p.order_id===id).map(p=>`${esc(p.operator)} · réf. ${esc(p.reference)}`).join(', ')||'Aucun paiement déclaré';
  const bt=(f,id,t,o)=>`<button class="btn s ${o?'o':''}" data-f="${f}" data-id="${id}">${t}</button>`;
  const sec=(t,a,e)=>`<h3>${t} (${a.length})</h3>${a.join('')||`<p class="mu">${e}</p>`}`;
- shell(`<a class="bk" href="#/profile">← Profil</a><h2>Administration</h2><a class="box blk" href="#/msgs">Toutes les conversations</a>
+ shell(`<a class="bk" href="#/profile">← Profil</a><h2>Administration</h2><a class="box blk" href="#/msgs">Toutes les conversations</a><a class="box blk" href="#/inscrits">Inscrits : e-mails confirmés et non confirmés</a>
  <div class="stat"><b>${CT.count??'?'}</b>personnes inscrites<br><small style="color:#F6E3C8">Y compris les e-mails pas encore confirmés.</small></div>
  ${sec('Annonces à valider',L.data.map(l=>`<div class="box"><div class="row2"><a href="#/l/${l.id}" class="th">${ph(l)}</a><div><b>${esc(l.title)}</b><br>${F(l.price)} · ${nm(l.seller_id)}<br><small>${esc(l.description).slice(0,120)}</small>${l.size_label?`<br><small>Taille : ${esc(l.size_label)}</small>`:''}${isStock(l)?vars(l).map(v=>`<br><small>${esc(v.label)} : ${F(v.price)} · ${v.stock===null?'sans limite':v.stock+' en stock'}</small>`).join(''):''}</div></div><div class="row">${bt('ok',l.id,'Publier')}${bt('no',l.id,'Refuser',1)}</div></div>`),'Rien à valider.')}
  ${sec('Paiements communs à confirmer',groups.map(groupCard),'Aucun paiement commun en attente.')}
