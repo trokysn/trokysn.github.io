@@ -530,7 +530,7 @@ async function order(id){
  act+='<button class="btn o" id="ocv">Ouvrir la messagerie</button>';
  if(sel&&!S.p.payout_number)act+='<p class="er">Renseignez votre numéro de réception dans Profil pour être payé.</p>';
  shell(`<a class="bk" href="#/orders">← Commandes</a><h2>${esc(o.listings?.title||'Commande')}</h2><p class="mu">${o.ref} · <span class="tag">${ST[st]}</span></p>
- <div class="box">${ov(o)?`${ov(o)}<br>`:''}Prix ${F(o.item_price)}${sel?`<br>Commission Troky ${F(o.commission)}<br><b>Vous recevez ${F(o.seller_amount)}</b>`:''}</div>
+ <div class="box">${ov(o)?`${ov(o)}<br>`:''}Prix ${F(o.item_price)}${sel?`<br><b>Vous recevez ${F(o.seller_amount)}</b>`:''}</div>
  <div class="steps">${steps.map(([n,a])=>`<div class="${a.includes(st)?'ok':''}"><i></i>${n}</div>`).join('')}</div>
  ${st==='expediee'&&o.auto_validate_at?`<p class="mu">Validation automatique le ${new Date(o.auto_validate_at).toLocaleDateString('fr-FR')} sans signalement.</p>`:''}${act}`,'/orders');
  const rpc=async(n,a)=>{const {error}=await SB.rpc(n,a);if(error)alert(error.message);order(id)};
